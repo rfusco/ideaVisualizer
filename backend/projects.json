@@ -1,3 +1,44 @@
 [
-
+  {
+    "id": "ccd6cdd2-814d-4fb0-b028-fee89d6e23e4",
+    "name": "SyncBoard",
+    "description": "A real-time, collaborative digital whiteboard that allows distributed teams to sketch, brainstorm, and share ideas simultaneously. It features user authentication, a canvas state-management system via WebSockets, and role-based permissions.",
+    "tools": [
+      "React",
+      "Node.js",
+      "Express",
+      "WebSocket",
+      "SQL",
+      "Docker",
+      "AWS"
+    ],
+    "timeframe": "month",
+    "url": null
+  },
+  {
+    "id": "c1c55aaf-884a-4a27-8c6d-2f7878e7afd4",
+    "name": "LogCaster",
+    "description": "A lightweight, high-performance distributed logging agent designed to tail log files from multiple services, parse them concurrently, and route them to centralized aggregation servers. It is built for minimal memory footprint and zero-copy file transmission.",
+    "tools": [
+      "Rust",
+      "Tokio",
+      "gRPC",
+      "Linux API"
+    ],
+    "timeframe": "week",
+    "url": null
+  },
+  {
+    "id": "c27764a5-6421-49b5-b724-0526d235850c",
+    "name": "LogCaster",
+    "description": "A lightweight, high-performance distributed logging agent designed to tail log files from multiple services, parse them concurrently, and route them to centralized aggregation servers. It is built for minimal memory footprint and zero-copy file transmission.",
+    "tools": [
+      "Rust",
+      "Tokio",
+      "gRPC",
+      "Linux API"
+    ],
+    "timeframe": "week",
+    "url": null
+  }
 ]
