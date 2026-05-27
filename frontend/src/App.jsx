@@ -1,12 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import ProjectForm from "./components/ProjectForm";
 
 export default function App() {
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
 
+  // Load projects from backend on first render
+  useEffect(() => {
+    axios.get("/api/projects").then((res) => {
+      setProjects(res.data.projects);
+    });
+  }, []); // empty array = runs once on mount
+
   function handleProjectAdded(responseData) {
-    setProjects((prev) => [...prev, responseData.project]);
+    setProjects(responseData.projects);
   }
 
   return (
