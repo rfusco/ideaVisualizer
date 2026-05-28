@@ -1,44 +1,66 @@
 [
   {
-    "id": "ccd6cdd2-814d-4fb0-b028-fee89d6e23e4",
-    "name": "SyncBoard",
-    "description": "A real-time, collaborative digital whiteboard that allows distributed teams to sketch, brainstorm, and share ideas simultaneously. It features user authentication, a canvas state-management system via WebSockets, and role-based permissions.",
-    "tools": [
-      "React",
-      "Node.js",
-      "Express",
-      "WebSocket",
-      "SQL",
-      "Docker",
-      "AWS"
-    ],
+    "id": "proj-001",
+    "name": "Custom Memory Allocator",
+    "description": "Implement malloc and free from scratch in C, managing a heap with free lists and coalescing blocks. Explore first-fit and best-fit strategies.",
+    "tools": ["C", "GDB", "Valgrind", "Make"],
+    "timeframe": "week",
+    "url": null
+  },
+  {
+    "id": "proj-002",
+    "name": "Unix Shell",
+    "description": "Build a bash-like shell in C supporting piping, redirection, background processes, and job control signals.",
+    "tools": ["C", "POSIX", "GDB", "Linux"],
+    "timeframe": "week",
+    "url": null
+  },
+  {
+    "id": "proj-003",
+    "name": "ELF Binary Parser",
+    "description": "Parse and inspect Linux ELF executables, reading symbol tables, section headers, and program headers from raw bytes.",
+    "tools": ["C", "Linux", "hexdump", "Python"],
+    "timeframe": "weekend",
+    "url": null
+  },
+  {
+    "id": "proj-004",
+    "name": "REST API Server",
+    "description": "Build a REST API with JWT authentication, rate limiting, and PostgreSQL persistence. Include OpenAPI documentation.",
+    "tools": ["Node.js", "Express", "PostgreSQL", "JWT"],
+    "timeframe": "week",
+    "url": null
+  },
+  {
+    "id": "proj-005",
+    "name": "Full Stack Todo App",
+    "description": "Create a full stack web application with a React frontend, REST backend, user accounts, and a database. Deploy to the cloud.",
+    "tools": ["React", "Node.js", "PostgreSQL", "Docker"],
+    "timeframe": "week",
+    "url": null
+  },
+  {
+    "id": "proj-006",
+    "name": "Real Time Chat App",
+    "description": "Build a browser-based chat application using WebSockets for real time messaging, with rooms, presence indicators, and message history.",
+    "tools": ["React", "Node.js", "WebSockets", "Redis"],
+    "timeframe": "week",
+    "url": null
+  },
+  {
+    "id": "proj-007",
+    "name": "Image Classifier",
+    "description": "Train a convolutional neural network to classify images using PyTorch. Fine-tune a pretrained ResNet on a custom dataset.",
+    "tools": ["Python", "PyTorch", "NumPy", "CUDA"],
     "timeframe": "month",
     "url": null
   },
   {
-    "id": "c1c55aaf-884a-4a27-8c6d-2f7878e7afd4",
-    "name": "LogCaster",
-    "description": "A lightweight, high-performance distributed logging agent designed to tail log files from multiple services, parse them concurrently, and route them to centralized aggregation servers. It is built for minimal memory footprint and zero-copy file transmission.",
-    "tools": [
-      "Rust",
-      "Tokio",
-      "gRPC",
-      "Linux API"
-    ],
-    "timeframe": "week",
-    "url": null
-  },
-  {
-    "id": "c27764a5-6421-49b5-b724-0526d235850c",
-    "name": "LogCaster",
-    "description": "A lightweight, high-performance distributed logging agent designed to tail log files from multiple services, parse them concurrently, and route them to centralized aggregation servers. It is built for minimal memory footprint and zero-copy file transmission.",
-    "tools": [
-      "Rust",
-      "Tokio",
-      "gRPC",
-      "Linux API"
-    ],
-    "timeframe": "week",
+    "id": "proj-008",
+    "name": "Sentiment Analysis Pipeline",
+    "description": "Build an NLP pipeline to classify sentiment in text using transformers. Fine-tune BERT on a labeled dataset and serve predictions via an API.",
+    "tools": ["Python", "HuggingFace", "PyTorch", "FastAPI"],
+    "timeframe": "month",
     "url": null
   }
 ]

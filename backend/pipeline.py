@@ -67,8 +67,16 @@ def reduce_dimensions(embeddings: np.ndarray) -> np.ndarray:
     random_state: fixed seed so the layout doesn't randomly change each run.
     """
     if len(embeddings) < 2:
-        # UMAP needs at least 2 points — return zeros for a single project
         return np.zeros((len(embeddings), 2))
+
+    # With very few points, spread them manually — UMAP needs enough
+    # neighbors to build a meaningful graph, and its eigensolver breaks
+    # when n_neighbors approaches the dataset size
+    if len(embeddings) < 4:
+        # Just space them evenly in a circle for tiny datasets
+        angles = np.linspace(0, 2 * np.pi, len(embeddings), endpoint=False)
+        coords = np.column_stack([np.cos(angles), np.sin(angles)])
+        return coords
 
     n_neighbors = min(15, len(embeddings) - 1)
 
@@ -107,8 +115,7 @@ def cluster_projects(embeddings: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
 
     clusterer = hdbscan.HDBSCAN(
         min_cluster_size=min_cluster_size,
-        metric="euclidean",
-        preDiction_data=True,
+        metric="euclidean"
     )
     clusterer.fit(embeddings)
 
