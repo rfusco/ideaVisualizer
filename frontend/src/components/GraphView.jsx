@@ -22,7 +22,7 @@ const RADIUS_MAP = {
   summer:  72,
 };
 const DEFAULT_RADIUS = 56;
-const PADDING = 0; // extra gap between node edges after collision resolution
+const PADDING = 1; // extra gap between node edges after collision resolution
 
 function applyForceLayout(projects) {
   if (projects.length === 0) return [];
@@ -139,6 +139,22 @@ export default function GraphView({ projects, onNodeClick }) {
   const handleNodeClick = useCallback((event, node) => {
     const project = projects.find((p) => p.id === node.id);
     if (project) onNodeClick(project);
+
+    // Highlight edges connected to the clicked node, fade all others
+    setEdges((eds) =>
+      eds.map((edge) => {
+        const isConnected = edge.source === node.id || edge.target === node.id;
+        return {
+          ...edge,
+          style: {
+            ...edge.style,
+            stroke: isConnected ? '#60a5fa' : '#6b7280',
+            strokeWidth: isConnected ? 3 : 1.5,
+            opacity: isConnected ? 1 : 0.15,
+          },
+        };
+      })
+    );
   }, [projects, onNodeClick]);
 
   return (
@@ -149,6 +165,7 @@ export default function GraphView({ projects, onNodeClick }) {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onNodeClick={handleNodeClick}
+        onPaneClick={() => setEdges(buildEdges(projects))}
         nodeTypes={nodeTypes}
         fitView
         fitViewOptions={{ padding: 0.3 }}
