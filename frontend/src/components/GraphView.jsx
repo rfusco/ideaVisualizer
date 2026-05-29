@@ -113,6 +113,7 @@ function buildEdges(projects) {
           id: `${a.id}-${b.id}`,
           source: a.id,
           target: b.id,
+          type: 'straight',
           style: {
             stroke: '#6b7280',
             strokeWidth: 1.5,

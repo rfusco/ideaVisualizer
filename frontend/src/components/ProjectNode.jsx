@@ -34,7 +34,12 @@ export default function ProjectNode({ data, selected }) {
   return (
     <>
       {/* Handles are invisible connection points React Flow uses for edges */}
-      <Handle type="target" position={Position.Top} className="opacity-0" />
+      <Handle
+      type="target"
+      position={Position.Top}
+      className="opacity-0"
+      style={{ left: '50%', top: '50%', opacity: 0, pointerEvents: 'none' }}
+      />
 
       <div
         style={{ opacity }}
@@ -64,7 +69,12 @@ export default function ProjectNode({ data, selected }) {
         )}
       </div>
 
-      <Handle type="source" position={Position.Bottom} className="opacity-0" />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        className="opacity-0"
+        style={{ left: '50%', bottom: '50%', opacity: 0, pointerEvents: 'none' }}
+      />
     </>
   );
 }
