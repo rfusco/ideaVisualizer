@@ -6,28 +6,85 @@ import ReactFlow, {
   useEdgesState,
 } from 'reactflow';
 import { useMemo, useEffect, useCallback } from 'react';
+import * as d3 from 'd3';
 import ProjectNode from './ProjectNode';
 
-// Register your custom node type
 const nodeTypes = { project: ProjectNode };
-
-// How much to scale UMAP coordinates into pixels
-// UMAP output is roughly in the range -5 to 5, so *150 gives -750 to 750px
 const SCALE = 150;
+const MIN_CONFIDENCE_FOR_EDGE = 0.3;
 
-// Only draw an edge if cosine similarity exceeds this threshold
-// We approximate similarity using cluster membership — same cluster = draw edge
-const MIN_CONFIDENCE_FOR_EDGE = 0.4;
+// Node radius in pixels by timeframe — must match the sizes in ProjectNode.jsx
+// w-24 = 96px, w-28 = 112px, w-32 = 128px, w-36 = 144px, divided by 2 for radius
+const RADIUS_MAP = {
+  weekend: 48,
+  week:    56,
+  month:   64,
+  summer:  72,
+};
+const DEFAULT_RADIUS = 56;
+const PADDING = 0; // extra gap between node edges after collision resolution
+
+function applyForceLayout(projects) {
+  if (projects.length === 0) return [];
+
+  // Step 1: create simulation nodes from UMAP coordinates
+  // We copy x/y into fx/fy as "target" positions — the positioning force
+  // will pull each node back toward these, so semantic layout is preserved
+  const simNodes = projects.map((p) => ({
+    id: p.id,
+    x: p.x * SCALE,
+    y: p.y * SCALE,
+    targetX: p.x * SCALE,
+    targetY: p.y * SCALE,
+    radius: (RADIUS_MAP[p.timeframe] || DEFAULT_RADIUS) + PADDING,
+  }));
+
+  // Step 2: build the simulation
+  // We don't run this live — we tick it a fixed number of times and
+  // read the final positions. This is called a "static" simulation.
+  const simulation = d3.forceSimulation(simNodes)
+    // Collision force: keeps node circles from overlapping
+    // Each node is treated as a circle with its radius + padding
+    .force('collide', d3.forceCollide()
+      .radius((d) => d.radius)
+      .strength(0.9)   // how aggressively to resolve overlaps (0-1)
+      .iterations(4)   // more iterations = more accurate but slower
+    )
+    // Positioning force: weak spring pulling each node back toward
+    // its original UMAP position. Strength 0.3 means the collision
+    // force can move nodes but they won't drift far from their semantic spot
+    .force('x', d3.forceX((d) => d.targetX).strength(0.3))
+    .force('y', d3.forceY((d) => d.targetY).strength(0.3))
+    // No link or charge forces — we only want collision + position
+    .stop(); // don't start the animation loop
+
+  // Step 3: run the simulation for enough ticks to converge
+  // 300 ticks is plenty for datasets under 100 nodes
+  // alphaDecay controls how quickly the simulation "cools down"
+  simulation.alphaDecay(0.01);
+  for (let i = 0; i < 300; i++) {
+    simulation.tick();
+  }
+
+  // Step 4: return adjusted positions keyed by project id
+  const positionById = {};
+  simNodes.forEach((n) => {
+    positionById[n.id] = { x: n.x, y: n.y };
+  });
+  return positionById;
+}
 
 function buildNodes(projects) {
+  if (projects.length === 0) return [];
+
+  // Run force layout to get collision-resolved positions
+  const positions = applyForceLayout(projects);
+
   return projects.map((p) => ({
     id: p.id,
-    type: 'project',           // tells React Flow to use ProjectNode
-    position: {
-      x: p.x * SCALE,
-      y: p.y * SCALE,
-    },
-    data: {                    // everything in here is passed to ProjectNode as `data`
+    type: 'project',
+    position: positions[p.id] || { x: p.x * SCALE, y: p.y * SCALE },
+    data: {
       name: p.name,
       description: p.description,
       tools: p.tools,
@@ -36,31 +93,22 @@ function buildNodes(projects) {
       cluster_id: p.cluster_id,
       confidence: p.confidence,
     },
-    // Prevent users from dragging nodes out of their semantic position
     draggable: true,
   }));
 }
 
 function buildEdges(projects) {
   const edges = [];
-
   for (let i = 0; i < projects.length; i++) {
     for (let j = i + 1; j < projects.length; j++) {
       const a = projects[i];
       const b = projects[j];
-
-      // Draw an edge between two nodes if:
-      // 1. They share the same cluster (cluster_id matches and isn't -1)
-      // 2. Both have sufficient confidence in that cluster
       const sameCluster = a.cluster_id === b.cluster_id && a.cluster_id !== -1;
       const bothConfident =
         a.confidence >= MIN_CONFIDENCE_FOR_EDGE &&
         b.confidence >= MIN_CONFIDENCE_FOR_EDGE;
-
       if (sameCluster && bothConfident) {
-        // Edge opacity scales with the average confidence of both endpoints
         const avgConfidence = (a.confidence + b.confidence) / 2;
-
         edges.push({
           id: `${a.id}-${b.id}`,
           source: a.id,
@@ -75,7 +123,6 @@ function buildEdges(projects) {
       }
     }
   }
-
   return edges;
 }
 
@@ -83,14 +130,12 @@ export default function GraphView({ projects, onNodeClick }) {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
-  // Recompute nodes and edges whenever projects changes
   useEffect(() => {
     setNodes(buildNodes(projects));
     setEdges(buildEdges(projects));
   }, [projects]);
 
   const handleNodeClick = useCallback((event, node) => {
-    // Find the full project object and pass it up to App
     const project = projects.find((p) => p.id === node.id);
     if (project) onNodeClick(project);
   }, [projects, onNodeClick]);
@@ -104,7 +149,7 @@ export default function GraphView({ projects, onNodeClick }) {
         onEdgesChange={onEdgesChange}
         onNodeClick={handleNodeClick}
         nodeTypes={nodeTypes}
-        fitView                        // auto-zoom to fit all nodes on load
+        fitView
         fitViewOptions={{ padding: 0.3 }}
         minZoom={0.2}
         maxZoom={3}
