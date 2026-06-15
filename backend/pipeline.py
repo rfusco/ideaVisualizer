@@ -1,18 +1,7 @@
 import numpy as np
-from sentence_transformers import SentenceTransformer
 from typing import List, Dict
 import hdbscan
 import umap
-
-# ---------------------------------------------------------------------------
-# Model loading
-# ---------------------------------------------------------------------------
-# This runs ONCE when the backend starts, not on every request.
-# The model (~80MB) is downloaded automatically on first run and cached locally.
-# Subsequent starts load from cache and are fast.
-print("Loading sentence transformer model...")
-model = SentenceTransformer("all-MiniLM-L6-v2")
-print("Model loaded.")
 
 
 # ---------------------------------------------------------------------------
@@ -39,7 +28,7 @@ def build_text(project: Dict) -> str:
 # ---------------------------------------------------------------------------
 # Embedding
 # ---------------------------------------------------------------------------
-def embed_projects(projects: List[Dict]) -> np.ndarray:
+def embed_projects(projects: List[Dict], model) -> np.ndarray:
     """
     Convert a list of projects into a 2D numpy array of embeddings.
     Shape: (num_projects, 384)
@@ -111,11 +100,13 @@ def cluster_projects(embeddings: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     if len(embeddings) < 2:
         return np.array([0]), np.array([1.0])
 
-    min_cluster_size = max(2, len(embeddings) // 10)
+    min_cluster_size = max(3, len(embeddings) // 10)
 
     clusterer = hdbscan.HDBSCAN(
-        min_cluster_size=min_cluster_size,
-        metric="euclidean"
+        min_cluster_size=2,
+        min_samples=1,
+        metric="euclidean",
+        cluster_selection_epsilon=0.5,  # max distance for points to be in the same cluster
     )
     clusterer.fit(embeddings)
 
@@ -128,7 +119,7 @@ def cluster_projects(embeddings: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
 # ---------------------------------------------------------------------------
 # Main pipeline function
 # ---------------------------------------------------------------------------
-def run_pipeline(projects: List[Dict]) -> List[Dict]:
+def run_pipeline(projects: List[Dict], model) -> List[Dict]:
     """
     Run the full pipeline on the current project list.
     Attaches x, y, cluster_id, and confidence to each project Dict.
@@ -138,7 +129,9 @@ def run_pipeline(projects: List[Dict]) -> List[Dict]:
         return []
 
     # Step 1: embed all projects
-    embeddings = embed_projects(projects)
+    embeddings = embed_projects(projects, model)
+
+    print("Number of embeddings:", len(embeddings))
 
     # Step 2: reduce to 2D
     coords_2d = reduce_dimensions(embeddings)

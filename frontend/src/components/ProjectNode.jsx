@@ -1,7 +1,5 @@
 import { Handle, Position } from 'reactflow';
 
-// A fixed set of colors, one per cluster id (0-7)
-// cluster_id -1 (noise) maps to gray via the fallback at the bottom
 const CLUSTER_COLORS = [
   { bg: 'bg-blue-600',   ring: 'ring-blue-400' },
   { bg: 'bg-purple-600', ring: 'ring-purple-400' },
@@ -19,7 +17,6 @@ export default function ProjectNode({ data, selected }) {
     ? CLUSTER_COLORS[clusterId % CLUSTER_COLORS.length]
     : { bg: 'bg-gray-600', ring: 'ring-gray-400' };
 
-  // Node size scales with timeframe
   const sizeMap = {
     weekend: 'w-24 h-24',
     week:    'w-28 h-28',
@@ -27,20 +24,16 @@ export default function ProjectNode({ data, selected }) {
     summer:  'w-36 h-36',
   };
   const size = sizeMap[data.timeframe] || 'w-28 h-28';
-
-  // Confidence drives opacity — low confidence nodes appear faded
   const opacity = 0.4 + (data.confidence * 0.6);
 
   return (
-    <>
-      {/* Handles are invisible connection points React Flow uses for edges */}
-      <Handle
-      type="target"
-      position={Position.Top}
-      className="opacity-0"
-      style={{ left: '50%', top: '50%', opacity: 0, pointerEvents: 'none' }}
-      />
+    // Outer wrapper — overflow visible so tooltip escapes the node bounds
+    <div className="relative overflow-visible flex flex-col items-center">
 
+      <Handle type="target" position={Position.Top}
+        style={{ left: '50%', top: '50%', opacity: 0, pointerEvents: 'none' }} />
+
+      {/* The circle */}
       <div
         style={{ opacity }}
         className={`
@@ -48,8 +41,7 @@ export default function ProjectNode({ data, selected }) {
           ${selected ? `ring-4 ${color.ring}` : ''}
           rounded-full flex flex-col items-center justify-center
           text-white text-center cursor-pointer
-          transition-all duration-200 hover:scale-110 shadow-lg
-          p-2
+          transition-all duration-200 hover:scale-110 shadow-lg p-2
         `}
       >
         <p className="text-xs font-semibold leading-tight line-clamp-2">
@@ -58,23 +50,13 @@ export default function ProjectNode({ data, selected }) {
         <p className="text-[10px] text-white/70 mt-1">
           {data.timeframe}
         </p>
-        {/* Confidence indicator dot */}
         {data.confidence < 0.5 && (
-          <span
-            title="Low confidence cluster assignment"
-            className="mt-1 text-[10px] bg-white/20 rounded px-1"
-          >
-            ?
-          </span>
+          <span className="mt-1 text-[10px] bg-white/20 rounded px-1">?</span>
         )}
       </div>
+      <Handle type="source" position={Position.Bottom}
+        style={{ left: '50%', top: '50%', opacity: 0, pointerEvents: 'none' }} />
 
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        className="opacity-0"
-        style={{ left: '50%', bottom: '50%', opacity: 0, pointerEvents: 'none' }}
-      />
-    </>
+    </div>
   );
 }

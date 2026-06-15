@@ -4,8 +4,25 @@ from pydantic import BaseModel
 from typing import Optional, List
 import storage
 import pipeline
+from contextlib import asynccontextmanager
+from sentence_transformers import SentenceTransformer
 
-app = FastAPI()
+import os
+from huggingface_hub import login
+
+login(token=os.getenv("HF_TOKEN"))
+
+model = None
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global model
+    print("Loading model...")
+    model = SentenceTransformer("all-MiniLM-L6-v2")
+    print("Model loaded.")
+    yield
+
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -38,7 +55,7 @@ def get_projects():
     projects = storage.load_projects()
     if not projects:
         return {"projects": []}
-    enriched = pipeline.run_pipeline(projects)
+    enriched = pipeline.run_pipeline(projects, model)
     return {"projects": enriched}
 
 
@@ -56,7 +73,7 @@ def add_project(project: Project):
 
     # Run ML pipeline on everything
     try:
-        enriched = pipeline.run_pipeline(all_projects)
+        enriched = pipeline.run_pipeline(all_projects, model)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Pipeline error: {str(e)}")
 
@@ -75,5 +92,5 @@ def delete_project(project_id: str):
     if not projects:
         return {"projects": []}
 
-    enriched = pipeline.run_pipeline(projects)
+    enriched = pipeline.run_pipeline(projects, model)
     return {"projects": enriched}

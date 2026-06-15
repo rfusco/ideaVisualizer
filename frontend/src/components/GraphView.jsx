@@ -74,7 +74,7 @@ function applyForceLayout(projects) {
   return positionById;
 }
 
-function buildNodes(projects) {
+function buildNodes(projects, devMode) {
   if (projects.length === 0) return [];
 
   // Run force layout to get collision-resolved positions
@@ -92,6 +92,9 @@ function buildNodes(projects) {
       url: p.url,
       cluster_id: p.cluster_id,
       confidence: p.confidence,
+      devMode,
+      x: p.x,
+      y: p.y,
     },
     draggable: true,
   }));
@@ -127,14 +130,14 @@ function buildEdges(projects) {
   return edges;
 }
 
-export default function GraphView({ projects, onNodeClick }) {
+export default function GraphView({ projects, onNodeClick, devMode }) {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
   useEffect(() => {
     setNodes(buildNodes(projects));
     setEdges(buildEdges(projects));
-  }, [projects]);
+  }, [projects, devMode]);
 
   const handleNodeClick = useCallback((event, node) => {
     const project = projects.find((p) => p.id === node.id);

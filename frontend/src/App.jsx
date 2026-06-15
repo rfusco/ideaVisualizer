@@ -7,6 +7,7 @@ export default function App() {
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [showForm, setShowForm] = useState(true);
+  const [devMode, setDevMode] = useState(false);
 
   useEffect(() => {
     axios.get("/api/projects").then((res) => {
@@ -28,6 +29,18 @@ export default function App() {
     <div className="flex h-screen bg-gray-900 text-white">
 
       {/* Left sidebar */}
+      <div className="p-2 border-b border-gray-700 flex justify-end">
+        <button
+          onClick={() => setDevMode((prev) => !prev)}
+          className={`text-xs px-2 py-1 rounded transition-colors ${
+            devMode
+              ? 'bg-green-700 text-white'
+              : 'bg-gray-700 text-gray-400 hover:text-white'
+            }`}
+          >
+            {devMode ? 'DEV ON' : 'DEV OFF'}
+          </button>
+        </div>
       <div className="w-80 flex flex-col border-r border-gray-700 overflow-y-auto shrink-0">
 
         {/* Tab switcher */}
@@ -87,6 +100,7 @@ export default function App() {
         <GraphView
           projects={projects}
           onNodeClick={handleNodeClick}
+          devMode={devMode}
         />
 
         {/* Detail panel — floats over the graph when a node is selected */}
@@ -135,6 +149,16 @@ export default function App() {
                 </a>
               )}
             </div>
+            {/* Dev mode info */}
+            {devMode && (
+              <div className="mt-3 pt-3 border-t border-gray-600 font-mono text-[11px] text-green-400 flex flex-col gap-1">
+                <p>cluster: {selectedProject.cluster_id === -1 ? 'noise' : selectedProject.cluster_id}</p>
+                <p>confidence: {(selectedProject.confidence * 100).toFixed(1)}%</p>
+                <p>x: {selectedProject.x?.toFixed(4)}</p>
+                <p>y: {selectedProject.y?.toFixed(4)}</p>
+                <p>id: {selectedProject.id}</p>
+              </div>
+            )}
           </div>
         )}
       </div>

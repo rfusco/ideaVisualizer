@@ -3,15 +3,26 @@
     "id": "sys-001",
     "name": "Custom Unix Shell",
     "description": "Build a fully functional Unix-like shell in C that supports command parsing, process creation, piping, input/output redirection, background jobs, and signal handling. Implement built-in commands such as cd, pwd, export, and history. Add advanced features like tab completion, environment variable expansion, and job control using POSIX APIs.",
-    "tools": ["C", "POSIX", "GDB", "Make", "Linux"],
-    "timeframe": "2-3 weeks",
+    "tools": [
+      "C",
+      "POSIX",
+      "GDB",
+      "Make",
+      "Linux"
+    ],
+    "timeframe": "2 weeks",
     "url": null
   },
   {
     "id": "sys-002",
     "name": "Virtual Memory Simulator",
     "description": "Create a simulator that models how an operating system handles virtual memory. Simulate paging, page replacement algorithms (LRU, FIFO, Clock), TLB caching, and page faults. Include configurable workloads and visualize memory access patterns, fault rates, and eviction behavior for different algorithms.",
-    "tools": ["C++", "Python", "Matplotlib", "Linux"],
+    "tools": [
+      "C++",
+      "Python",
+      "Matplotlib",
+      "Linux"
+    ],
     "timeframe": "2 weeks",
     "url": null
   },
@@ -19,7 +30,13 @@
     "id": "sys-003",
     "name": "Thread Pool and Task Scheduler",
     "description": "Implement a multithreaded task scheduler in C++ using mutexes, condition variables, and lock-free queues. Design a reusable thread pool capable of dynamically balancing workloads between worker threads. Include benchmarking against sequential execution and support priorities and asynchronous task submission.",
-    "tools": ["C++", "pthread", "CMake", "Linux", "Perf"],
+    "tools": [
+      "C++",
+      "pthread",
+      "CMake",
+      "Linux",
+      "Perf"
+    ],
     "timeframe": "2-4 weeks",
     "url": null
   },
@@ -27,7 +44,12 @@
     "id": "cyber-001",
     "name": "Packet Sniffer and Traffic Analyzer",
     "description": "Develop a network packet sniffer capable of capturing and decoding Ethernet, IP, TCP, UDP, and HTTP traffic. Add filtering rules, packet statistics, and protocol analysis features. Create a terminal dashboard to visualize traffic patterns, suspicious activity, and connection summaries in real time.",
-    "tools": ["Python", "Scapy", "Wireshark", "Linux"],
+    "tools": [
+      "Python",
+      "Scapy",
+      "Wireshark",
+      "Linux"
+    ],
     "timeframe": "1-2 weeks",
     "url": null
   },
@@ -35,7 +57,12 @@
     "id": "cyber-002",
     "name": "Password Cracking Lab",
     "description": "Design a controlled educational environment demonstrating password cracking techniques. Implement brute-force, dictionary, and rainbow-table-inspired attacks against hashed passwords. Compare hash algorithms such as MD5, SHA-1, bcrypt, and Argon2, and analyze the computational difficulty of modern password storage methods.",
-    "tools": ["Python", "Hashcat", "Docker", "Linux"],
+    "tools": [
+      "Python",
+      "Hashcat",
+      "Docker",
+      "Linux"
+    ],
     "timeframe": "1 week",
     "url": null
   },
@@ -43,7 +70,13 @@
     "id": "cyber-003",
     "name": "Mini Intrusion Detection System",
     "description": "Create a lightweight intrusion detection system that monitors network traffic and system logs for suspicious behavior. Implement rule-based detection for port scans, brute-force login attempts, and unusual outbound traffic. Add configurable alerts, logging, and a web dashboard for monitoring security events.",
-    "tools": ["Go", "SQLite", "Docker", "Linux", "REST API"],
+    "tools": [
+      "Go",
+      "SQLite",
+      "Docker",
+      "Linux",
+      "REST API"
+    ],
     "timeframe": "3-4 weeks",
     "url": null
   },
@@ -51,7 +84,13 @@
     "id": "gfx-001",
     "name": "2D Fluid Simulation Engine",
     "description": "Build a real-time 2D fluid simulation using Smoothed Particle Hydrodynamics (SPH). Implement pressure, viscosity, density calculations, and collision handling. Render particles using modern OpenGL and provide adjustable simulation parameters through an ImGui interface for experimentation and performance testing.",
-    "tools": ["C++", "OpenGL", "GLFW", "ImGui", "CMake"],
+    "tools": [
+      "C++",
+      "OpenGL",
+      "GLFW",
+      "ImGui",
+      "CMake"
+    ],
     "timeframe": "4-6 weeks",
     "url": null
   },
@@ -59,7 +98,12 @@
     "id": "gfx-002",
     "name": "Ray Tracer from Scratch",
     "description": "Develop a CPU-based ray tracer capable of rendering realistic 3D scenes with shadows, reflections, refractions, and global illumination concepts. Implement acceleration structures such as BVH trees and support multiple material and lighting models. Export rendered scenes to image files.",
-    "tools": ["C++", "SDL2", "Linear Algebra", "CMake"],
+    "tools": [
+      "C++",
+      "SDL2",
+      "Linear Algebra",
+      "CMake"
+    ],
     "timeframe": "3-5 weeks",
     "url": null
   },
@@ -67,7 +111,13 @@
     "id": "gfx-003",
     "name": "Procedural Terrain Generator",
     "description": "Generate large-scale procedural terrain using Perlin noise, fractal Brownian motion, and erosion algorithms. Render terrain with OpenGL and allow camera navigation through the environment. Add biome generation, water rendering, and terrain texturing based on elevation and humidity maps.",
-    "tools": ["C++", "OpenGL", "GLSL", "ImGui", "Noise Algorithms"],
+    "tools": [
+      "C++",
+      "OpenGL",
+      "GLSL",
+      "ImGui",
+      "Noise Algorithms"
+    ],
     "timeframe": "3-4 weeks",
     "url": null
   },
@@ -75,7 +125,13 @@
     "id": "web-001",
     "name": "Collaborative Proposal Writing Platform",
     "description": "Develop a web application for contractors to create, edit, and manage professional proposals collaboratively. Implement role-based permissions, PDF generation using LaTeX, version history, inline comments, and autosave functionality. Include authentication and secure file storage.",
-    "tools": ["React", "Flask", "PostgreSQL", "Tailwind CSS", "LaTeX"],
+    "tools": [
+      "React",
+      "Flask",
+      "PostgreSQL",
+      "Tailwind CSS",
+      "LaTeX"
+    ],
     "timeframe": "4-6 weeks",
     "url": null
   },
@@ -83,7 +139,13 @@
     "id": "web-002",
     "name": "Real-Time Chat and Collaboration App",
     "description": "Create a Slack-inspired messaging platform with channels, direct messaging, typing indicators, file uploads, and live notifications. Use WebSockets for real-time communication and implement scalable backend APIs with JWT-based authentication.",
-    "tools": ["Node.js", "Express", "React", "Socket.IO", "MongoDB"],
+    "tools": [
+      "Node.js",
+      "Express",
+      "React",
+      "Socket.IO",
+      "MongoDB"
+    ],
     "timeframe": "3-5 weeks",
     "url": null
   },
@@ -91,7 +153,13 @@
     "id": "web-003",
     "name": "House Marketplace Recommendation Engine",
     "description": "Build a Tinder-style house browsing platform where users swipe through listings and receive personalized recommendations. Implement filtering by price, location, and features, and train a recommendation model based on user interactions and saved preferences.",
-    "tools": ["React", "Node.js", "MongoDB", "Python", "Machine Learning"],
+    "tools": [
+      "React",
+      "Node.js",
+      "MongoDB",
+      "Python",
+      "Machine Learning"
+    ],
     "timeframe": "4-6 weeks",
     "url": null
   },
@@ -99,7 +167,13 @@
     "id": "data-001",
     "name": "Distributed Log Processing Pipeline",
     "description": "Design a scalable log ingestion and processing pipeline that collects logs from multiple services, processes them in real time, and stores structured analytics data. Implement batching, stream processing, and dashboard visualizations for monitoring throughput, latency, and anomalies.",
-    "tools": ["Kafka", "Python", "Spark", "Docker", "PostgreSQL"],
+    "tools": [
+      "Kafka",
+      "Python",
+      "Spark",
+      "Docker",
+      "PostgreSQL"
+    ],
     "timeframe": "3-5 weeks",
     "url": null
   },
@@ -107,7 +181,13 @@
     "id": "data-002",
     "name": "Custom Time-Series Database",
     "description": "Build a lightweight time-series database optimized for high-frequency sensor or stock market data. Implement compression, indexing, retention policies, and efficient range queries. Expose a REST API and benchmark performance against traditional relational databases.",
-    "tools": ["Go", "REST API", "SQLite", "Docker", "Benchmarking"],
+    "tools": [
+      "Go",
+      "REST API",
+      "SQLite",
+      "Docker",
+      "Benchmarking"
+    ],
     "timeframe": "4 weeks",
     "url": null
   },
@@ -115,7 +195,12 @@
     "id": "data-003",
     "name": "Mini MapReduce Framework",
     "description": "Implement a simplified MapReduce framework that distributes computation tasks across worker nodes. Support fault tolerance, task scheduling, and distributed file chunking. Demonstrate the framework by processing large datasets such as word counts or web server logs.",
-    "tools": ["Go", "RPC", "Distributed Systems", "Linux"],
+    "tools": [
+      "Go",
+      "RPC",
+      "Distributed Systems",
+      "Linux"
+    ],
     "timeframe": "4-6 weeks",
     "url": null
   },
@@ -123,7 +208,11 @@
     "id": "ai-001",
     "name": "Neural Network From Scratch",
     "description": "Implement a feedforward neural network from scratch without using deep learning frameworks. Build forward propagation, backpropagation, gradient descent, and activation functions manually. Train the model on handwritten digit recognition datasets and visualize training accuracy and loss over time.",
-    "tools": ["Python", "NumPy", "Matplotlib"],
+    "tools": [
+      "Python",
+      "NumPy",
+      "Matplotlib"
+    ],
     "timeframe": "2-3 weeks",
     "url": null
   },
@@ -131,7 +220,13 @@
     "id": "ai-002",
     "name": "AI Chatbot with Retrieval-Augmented Generation",
     "description": "Develop an intelligent chatbot capable of answering questions using external documents and semantic search. Implement embeddings, vector databases, chunking pipelines, and context-aware responses powered by a local or cloud-hosted language model.",
-    "tools": ["Python", "LangChain", "FAISS", "OpenAI API", "FastAPI"],
+    "tools": [
+      "Python",
+      "LangChain",
+      "FAISS",
+      "OpenAI API",
+      "FastAPI"
+    ],
     "timeframe": "3-5 weeks",
     "url": null
   },
@@ -139,7 +234,12 @@
     "id": "ai-003",
     "name": "Computer Vision Object Tracker",
     "description": "Create a real-time object detection and tracking system capable of identifying and following objects across video frames. Implement YOLO-based detection, centroid tracking, motion prediction, and performance optimization for webcam or video stream input.",
-    "tools": ["Python", "OpenCV", "PyTorch", "CUDA"],
+    "tools": [
+      "Python",
+      "OpenCV",
+      "PyTorch",
+      "CUDA"
+    ],
     "timeframe": "3-4 weeks",
     "url": null
   },
@@ -147,7 +247,11 @@
     "id": "mobile-001",
     "name": "Campus Navigation Mobile App",
     "description": "Build a mobile app that helps students navigate a university campus with indoor and outdoor directions, class schedules, event notifications, and live shuttle tracking. Include offline caching and geolocation support.",
-    "tools": ["Flutter", "Firebase", "Google Maps API"],
+    "tools": [
+      "Flutter",
+      "Firebase",
+      "Google Maps API"
+    ],
     "timeframe": "3-5 weeks",
     "url": null
   },
@@ -155,7 +259,11 @@
     "id": "mobile-002",
     "name": "Fitness Tracking Application",
     "description": "Develop a fitness application that records workouts, tracks calories burned, and visualizes progress over time. Add social features such as friend leaderboards, workout sharing, and achievement badges.",
-    "tools": ["React Native", "Node.js", "MongoDB"],
+    "tools": [
+      "React Native",
+      "Node.js",
+      "MongoDB"
+    ],
     "timeframe": "4 weeks",
     "url": null
   },
@@ -163,7 +271,11 @@
     "id": "mobile-003",
     "name": "Personal Finance Budgeting App",
     "description": "Create a personal finance application that categorizes transactions, tracks monthly budgets, and generates spending analytics. Integrate bank transaction imports and notification reminders for recurring payments.",
-    "tools": ["Swift", "Core Data", "Firebase"],
+    "tools": [
+      "Swift",
+      "Core Data",
+      "Firebase"
+    ],
     "timeframe": "3-4 weeks",
     "url": null
   },
@@ -171,7 +283,11 @@
     "id": "game-001",
     "name": "2D Multiplayer Platformer",
     "description": "Design a multiplayer 2D platformer game with synchronized movement, collision detection, matchmaking, and latency compensation. Include lobby systems, player customization, and physics-driven gameplay.",
-    "tools": ["Unity", "C#", "Photon Networking"],
+    "tools": [
+      "Unity",
+      "C#",
+      "Photon Networking"
+    ],
     "timeframe": "4-6 weeks",
     "url": null
   },
@@ -179,7 +295,12 @@
     "id": "game-002",
     "name": "Voxel Sandbox Game Engine",
     "description": "Develop a voxel-based sandbox environment inspired by procedural block worlds. Implement chunk loading, terrain generation, lighting propagation, and optimized rendering using greedy meshing techniques.",
-    "tools": ["C++", "OpenGL", "GLFW", "Noise Algorithms"],
+    "tools": [
+      "C++",
+      "OpenGL",
+      "GLFW",
+      "Noise Algorithms"
+    ],
     "timeframe": "5-7 weeks",
     "url": null
   },
@@ -187,7 +308,11 @@
     "id": "game-003",
     "name": "Turn-Based Strategy AI",
     "description": "Build a turn-based strategy game with AI opponents using minimax search, alpha-beta pruning, and heuristic evaluation functions. Add replay functionality and adjustable difficulty levels.",
-    "tools": ["Python", "Pygame", "Algorithms"],
+    "tools": [
+      "Python",
+      "Pygame",
+      "Algorithms"
+    ],
     "timeframe": "2-4 weeks",
     "url": null
   },
@@ -195,7 +320,12 @@
     "id": "cloud-001",
     "name": "Containerized Microservices Platform",
     "description": "Design a distributed microservices architecture using Docker containers and Kubernetes orchestration. Implement service discovery, load balancing, API gateways, and centralized logging.",
-    "tools": ["Docker", "Kubernetes", "Go", "NGINX"],
+    "tools": [
+      "Docker",
+      "Kubernetes",
+      "Go",
+      "NGINX"
+    ],
     "timeframe": "4-6 weeks",
     "url": null
   },
@@ -203,7 +333,12 @@
     "id": "cloud-002",
     "name": "Serverless Image Processing Pipeline",
     "description": "Build a cloud-native image processing pipeline that automatically resizes, compresses, and categorizes uploaded images using serverless functions and object storage events.",
-    "tools": ["AWS Lambda", "S3", "Python", "Terraform"],
+    "tools": [
+      "AWS Lambda",
+      "S3",
+      "Python",
+      "Terraform"
+    ],
     "timeframe": "2-3 weeks",
     "url": null
   },
@@ -211,7 +346,12 @@
     "id": "cloud-003",
     "name": "Scalable URL Shortener",
     "description": "Create a highly scalable URL shortening service with analytics dashboards, rate limiting, expiration support, and distributed caching. Design the backend to handle millions of redirects efficiently.",
-    "tools": ["Redis", "Go", "PostgreSQL", "Docker"],
+    "tools": [
+      "Redis",
+      "Go",
+      "PostgreSQL",
+      "Docker"
+    ],
     "timeframe": "3-5 weeks",
     "url": null
   },
@@ -219,7 +359,12 @@
     "id": "robotics-001",
     "name": "Autonomous Line Following Robot",
     "description": "Develop a robot capable of autonomously following paths using infrared sensors and PID control. Add obstacle avoidance and telemetry visualization through a desktop interface.",
-    "tools": ["Arduino", "C++", "Sensors", "PID Control"],
+    "tools": [
+      "Arduino",
+      "C++",
+      "Sensors",
+      "PID Control"
+    ],
     "timeframe": "2-3 weeks",
     "url": null
   },
@@ -227,7 +372,12 @@
     "id": "robotics-002",
     "name": "Drone Flight Stabilization System",
     "description": "Implement a quadcopter stabilization system using gyroscope and accelerometer data. Develop sensor fusion algorithms and tune PID controllers for stable autonomous flight.",
-    "tools": ["STM32", "C", "IMU Sensors", "Embedded Systems"],
+    "tools": [
+      "STM32",
+      "C",
+      "IMU Sensors",
+      "Embedded Systems"
+    ],
     "timeframe": "4-6 weeks",
     "url": null
   },
@@ -235,8 +385,26 @@
     "id": "robotics-003",
     "name": "Warehouse Robot Path Planner",
     "description": "Create a warehouse robot simulation capable of navigating dynamic environments using A* pathfinding and obstacle avoidance algorithms. Simulate package pickup and optimized route scheduling.",
-    "tools": ["ROS", "Python", "Gazebo", "Pathfinding Algorithms"],
+    "tools": [
+      "ROS",
+      "Python",
+      "Gazebo",
+      "Pathfinding Algorithms"
+    ],
     "timeframe": "4-5 weeks",
+    "url": null
+  },
+  {
+    "id": "28fd5d7d-9f76-45ec-9f4b-3f2a31bbd882",
+    "name": "Mo and Kalli Date Tracker",
+    "description": "A reactive dashboard to track, plan, and monitor Mo and Kalli's date activities, including a calendar and email subscription service with a premium feature for naked notifications.",
+    "tools": [
+      "react",
+      "python",
+      "SQL",
+      "email service"
+    ],
+    "timeframe": "summer",
     "url": null
   }
 ]
