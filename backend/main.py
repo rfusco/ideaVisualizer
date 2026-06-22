@@ -1,22 +1,24 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, List
-import storage
-import pipeline
 from contextlib import asynccontextmanager
 from sentence_transformers import SentenceTransformer
+from sqlalchemy.orm import Session
+import json
 
-import os
-from huggingface_hub import login
+import database
+import pipeline
 
-login(token=os.getenv("HF_TOKEN"))
-
+# ---------------------------------------------------------------------------
+# Startup
+# ---------------------------------------------------------------------------
 model = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global model
+    database.create_tables()
     print("Loading model...")
     model = SentenceTransformer("all-MiniLM-L6-v2")
     print("Model loaded.")
@@ -32,7 +34,10 @@ app.add_middleware(
 )
 
 
-class Project(BaseModel):
+# ---------------------------------------------------------------------------
+# Request schema
+# ---------------------------------------------------------------------------
+class ProjectRequest(BaseModel):
     id: str
     name: str
     description: str
@@ -41,39 +46,57 @@ class Project(BaseModel):
     url: Optional[str] = None
 
 
+# ---------------------------------------------------------------------------
+# Routes
+# ---------------------------------------------------------------------------
 @app.get("/api/health")
 def health():
     return {"status": "ok"}
 
 
 @app.get("/api/projects")
-def get_projects():
-    """
-    Return all projects with their current coordinates and cluster labels.
-    Called on page load to restore state.
-    """
-    projects = storage.load_projects()
-    if not projects:
+def get_projects(db: Session = Depends(database.get_db)):
+    rows = db.query(database.Project).all()
+    if not rows:
         return {"projects": []}
+    projects = [database.row_to_dict(r) for r in rows]
     enriched = pipeline.run_pipeline(projects, model)
     return {"projects": enriched}
 
 
 @app.post("/api/projects")
-def add_project(project: Project):
-    """
-    Accept a new project, store it, re-run the full pipeline on all projects,
-    and return the enriched full list so the frontend can redraw the graph.
-    """
-    # Convert pydantic model to plain dict for storage
-    project_dict = project.model_dump()
+def add_project(
+    project: ProjectRequest,
+    db: Session = Depends(database.get_db),
+):
+    # Upsert — update if the id already exists, insert if not
+    existing = db.query(database.Project).filter(
+        database.Project.id == project.id
+    ).first()
 
-    # Save to disk and get updated full list
-    all_projects = storage.add_project(project_dict)
+    if existing:
+        existing.name        = project.name
+        existing.description = project.description
+        existing.tools       = json.dumps(project.tools)
+        existing.timeframe   = project.timeframe
+        existing.url         = project.url
+    else:
+        db.add(database.Project(
+            id          = project.id,
+            name        = project.name,
+            description = project.description,
+            tools       = json.dumps(project.tools),
+            timeframe   = project.timeframe,
+            url         = project.url,
+        ))
 
-    # Run ML pipeline on everything
+    db.commit()
+
+    rows = db.query(database.Project).all()
+    projects = [database.row_to_dict(r) for r in rows]
+
     try:
-        enriched = pipeline.run_pipeline(all_projects, model)
+        enriched = pipeline.run_pipeline(projects, model)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Pipeline error: {str(e)}")
 
@@ -81,16 +104,19 @@ def add_project(project: Project):
 
 
 @app.delete("/api/projects/{project_id}")
-def delete_project(project_id: str):
-    """
-    Remove a project by id, re-run pipeline, return updated list.
-    """
-    projects = storage.load_projects()
-    projects = [p for p in projects if p["id"] != project_id]
-    storage.save_projects(projects)
+def delete_project(
+    project_id: str,
+    db: Session = Depends(database.get_db),
+):
+    db.query(database.Project).filter(
+        database.Project.id == project_id
+    ).delete()
+    db.commit()
 
-    if not projects:
+    rows = db.query(database.Project).all()
+    if not rows:
         return {"projects": []}
 
+    projects = [database.row_to_dict(r) for r in rows]
     enriched = pipeline.run_pipeline(projects, model)
     return {"projects": enriched}
