@@ -6,9 +6,12 @@ from contextlib import asynccontextmanager
 from sentence_transformers import SentenceTransformer
 from sqlalchemy.orm import Session
 import json
+import os
 
 import database
 import pipeline
+import auth
+from routers.auth_router import router as auth_router
 
 # ---------------------------------------------------------------------------
 # Startup
@@ -25,10 +28,16 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(lifespan=lifespan)
+app.include_router(auth_router)
+
+allow_origins = ["http://localhost:5173"]
+frontend_url = os.getenv("FRONTEND_URL")
+if frontend_url:
+    allow_origins.append(frontend_url)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=allow_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -55,8 +64,13 @@ def health():
 
 
 @app.get("/api/projects")
-def get_projects(db: Session = Depends(database.get_db)):
-    rows = db.query(database.Project).all()
+def get_projects(
+    current_user: database.User = Depends(auth.get_current_user),
+    db: Session = Depends(database.get_db),
+):
+    rows = db.query(database.Project).filter(
+        database.Project.user_id == current_user.id
+    ).all()
     if not rows:
         return {"projects": []}
     projects = [database.row_to_dict(r) for r in rows]
@@ -67,11 +81,12 @@ def get_projects(db: Session = Depends(database.get_db)):
 @app.post("/api/projects")
 def add_project(
     project: ProjectRequest,
+    current_user: database.User = Depends(auth.get_current_user),
     db: Session = Depends(database.get_db),
 ):
-    # Upsert — update if the id already exists, insert if not
     existing = db.query(database.Project).filter(
-        database.Project.id == project.id
+        database.Project.id == project.id,
+        database.Project.user_id == current_user.id,
     ).first()
 
     if existing:
@@ -88,11 +103,14 @@ def add_project(
             tools       = json.dumps(project.tools),
             timeframe   = project.timeframe,
             url         = project.url,
+            user_id     = current_user.id,
         ))
 
     db.commit()
 
-    rows = db.query(database.Project).all()
+    rows = db.query(database.Project).filter(
+        database.Project.user_id == current_user.id
+    ).all()
     projects = [database.row_to_dict(r) for r in rows]
 
     try:
@@ -106,14 +124,18 @@ def add_project(
 @app.delete("/api/projects/{project_id}")
 def delete_project(
     project_id: str,
+    current_user: database.User = Depends(auth.get_current_user),
     db: Session = Depends(database.get_db),
 ):
     db.query(database.Project).filter(
-        database.Project.id == project_id
+        database.Project.id == project_id,
+        database.Project.user_id == current_user.id,
     ).delete()
     db.commit()
 
-    rows = db.query(database.Project).all()
+    rows = db.query(database.Project).filter(
+        database.Project.user_id == current_user.id
+    ).all()
     if not rows:
         return {"projects": []}
 

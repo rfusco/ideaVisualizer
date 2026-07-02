@@ -1,17 +1,28 @@
-from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime
+from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, ForeignKey, text
 from sqlalchemy.orm import declarative_base, sessionmaker
 from datetime import datetime, timezone
 import json
+import os
 
-DATABASE_URL = "sqlite:///./ideavisualizer.db"
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./ideavisualizer.db")
+# Render provides postgres:// but SQLAlchemy requires postgresql://
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False}
-)
+connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+engine = create_engine(DATABASE_URL, connect_args=connect_args)
 
 SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 Base = declarative_base()
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id         = Column(Integer, primary_key=True, index=True)
+    email      = Column(String, unique=True, index=True, nullable=False)
+    hashed_pw  = Column(String, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
 class Project(Base):
@@ -20,15 +31,23 @@ class Project(Base):
     id          = Column(String, primary_key=True)
     name        = Column(String, nullable=False)
     description = Column(Text, nullable=False)
-    tools       = Column(Text, nullable=False)   # stored as JSON string
+    tools       = Column(Text, nullable=False)
     timeframe   = Column(String, nullable=False)
     url         = Column(String, nullable=True)
     created_at  = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    user_id     = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
 
 
 def create_tables():
-    """Create all tables if they don't exist. Safe to call on every startup."""
     Base.metadata.create_all(bind=engine)
+    # Add user_id column to existing projects tables that predate auth
+    with engine.connect() as conn:
+        try:
+            conn.execute(text("ALTER TABLE projects ADD COLUMN user_id INTEGER REFERENCES users(id)"))
+            conn.execute(text("CREATE INDEX IF NOT EXISTS ix_projects_user_id ON projects (user_id)"))
+            conn.commit()
+        except Exception:
+            pass  # column already exists
 
 
 def get_db():

@@ -1,35 +1,50 @@
 import { useState, useEffect, useCallback } from "react";
-import axios from "axios";
+import api from "./api/axios";
+import { useAuth } from "./context/AuthContext";
+import AuthPage from "./components/AuthPage";
 import ProjectForm from "./components/ProjectForm";
 import GraphView from "./components/GraphView";
 
 export default function App() {
+  const { user, logout, loading } = useAuth();
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [showForm, setShowForm] = useState(true);
   const [devMode, setDevMode] = useState(false);
 
   useEffect(() => {
-    axios.get("/api/projects").then((res) => {
-      setProjects(res.data.projects);
-    });
-  }, []);
+    if (user) {
+      api.get("/api/projects").then((res) => {
+        setProjects(res.data.projects);
+      });
+    }
+  }, [user]);
 
-  function handleProjectAdded(responseData) {
+  const handleProjectAdded = useCallback((responseData) => {
     setProjects(responseData.projects);
     setSelectedProject(null);
-  }
+  }, []);
 
   const handleNodeClick = useCallback((project) => {
     setSelectedProject(project);
     setShowForm(false);
   }, []);
 
+  if (loading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-900 text-gray-400">
+        Loading...
+      </div>
+    );
+  }
+
+  if (!user) return <AuthPage />;
+
   return (
     <div className="flex h-screen bg-gray-900 text-white">
 
       {/* Left sidebar */}
-      <div className="p-2 border-b border-gray-700 flex justify-end">
+      <div className="p-2 border-b border-gray-700 flex justify-end gap-2">
         <button
           onClick={() => setDevMode((prev) => !prev)}
           className={`text-xs px-2 py-1 rounded transition-colors ${
@@ -39,6 +54,12 @@ export default function App() {
             }`}
           >
             {devMode ? 'DEV ON' : 'DEV OFF'}
+          </button>
+          <button
+            onClick={logout}
+            className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-400 hover:text-white transition-colors"
+          >
+            Sign out
           </button>
         </div>
       <div className="w-80 flex flex-col border-r border-gray-700 overflow-y-auto shrink-0">

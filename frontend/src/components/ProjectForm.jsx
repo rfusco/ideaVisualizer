@@ -1,5 +1,5 @@
 import { useState } from "react";
-import axios from "axios";
+import api from "../api/axios";
 import TagInput from "./TagInput";
 
 const TIMEFRAME_OPTIONS = [
@@ -59,7 +59,7 @@ export default function ProjectForm({ onProjectAdded }) {
         url: form.url.trim() || null,
       };
 
-      const response = await axios.post("/api/projects", payload);
+      const response = await api.post("/api/projects", payload);
       
       // Tell the parent a project was added, passing back the full response
       onProjectAdded(response.data);
