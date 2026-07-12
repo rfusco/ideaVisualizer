@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import api from "../api/axios";
 import TagInput from "./TagInput";
 
@@ -17,10 +17,28 @@ const EMPTY_FORM = {
   url: "",
 };
 
-export default function ProjectForm({ onProjectAdded }) {
+export default function ProjectForm({ onProjectAdded, editingProject, onCancelEdit }) {
   const [form, setForm] = useState(EMPTY_FORM);
-  const [status, setStatus] = useState("idle"); // idle | loading | success | error
+  const [status, setStatus] = useState("idle");
   const [errorMessage, setErrorMessage] = useState("");
+
+  // When editingProject is set, populate the form with its values.
+  // When it's cleared (cancel or save), reset back to the empty form.
+  useEffect(() => {
+    if (editingProject) {
+      setForm({
+        name:        editingProject.name,
+        description: editingProject.description,
+        tools:       editingProject.tools,
+        timeframe:   editingProject.timeframe,
+        url:         editingProject.url || "",
+      });
+    } else {
+      setForm(EMPTY_FORM);
+    }
+    setStatus("idle");
+    setErrorMessage("");
+  }, [editingProject]);
 
   function updateField(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -51,7 +69,7 @@ export default function ProjectForm({ onProjectAdded }) {
 
     try {
       const payload = {
-        id: crypto.randomUUID(),
+        id: editingProject ? editingProject.id : crypto.randomUUID(),
         name: form.name.trim(),
         description: form.description.trim(),
         tools: form.tools,
@@ -63,8 +81,7 @@ export default function ProjectForm({ onProjectAdded }) {
       
       // Tell the parent a project was added, passing back the full response
       onProjectAdded(response.data);
-      
-      // Reset form
+      if (editingProject && onCancelEdit) onCancelEdit();
       setForm(EMPTY_FORM);
       setStatus("success");
       setTimeout(() => setStatus("idle"), 2000);
@@ -157,17 +174,28 @@ export default function ProjectForm({ onProjectAdded }) {
       )}
 
       {/* Submit */}
-      <button
-        type="submit"
-        disabled={status === "loading"}
-        className="mt-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
-      >
-        {status === "loading"
-          ? "Categorizing..."
-          : status === "success"
-          ? "Added!"
-          : "Add Project"}
-      </button>
+      <div className="mt-2 flex gap-2">
+        <button
+          type="submit"
+          disabled={status === "loading"}
+          className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
+        >
+          {status === "loading"
+            ? "Saving..."
+            : status === "success"
+            ? (editingProject ? "Saved!" : "Added!")
+            : (editingProject ? "Save Changes" : "Add Project")}
+        </button>
+        {editingProject && (
+          <button
+            type="button"
+            onClick={onCancelEdit}
+            className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 font-medium rounded-lg transition-colors"
+          >
+            Cancel
+          </button>
+        )}
+      </div>
     </form>
   );
 }

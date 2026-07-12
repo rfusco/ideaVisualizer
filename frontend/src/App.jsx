@@ -12,6 +12,7 @@ export default function App() {
   const [showForm, setShowForm] = useState(true);
   const [devMode, setDevMode] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [editingProject, setEditingProject] = useState(null);
 
   useEffect(() => {
     if (user) {
@@ -30,7 +31,15 @@ export default function App() {
     setSelectedProject(project);
     setShowForm(false);
     setConfirmDelete(false);
+    setEditingProject(null);
   }, []);
+
+  function handleEdit(project) {
+    setEditingProject(project);
+    setSelectedProject(null);
+    setShowForm(true);
+    setConfirmDelete(false);
+  }
 
   async function handleDelete(projectId) {
     const res = await api.delete(`/api/projects/${projectId}`);
@@ -99,7 +108,11 @@ export default function App() {
 
         {showForm ? (
           <div className="p-4">
-            <ProjectForm onProjectAdded={handleProjectAdded} />
+            <ProjectForm
+              onProjectAdded={handleProjectAdded}
+              editingProject={editingProject}
+              onCancelEdit={() => setEditingProject(null)}
+            />
           </div>
         ) : (
           <div className="p-4 flex flex-col gap-2">
@@ -190,8 +203,16 @@ export default function App() {
                 </a>
               )}
             </div>
-            {/* Delete */}
+            {/* Edit / Delete */}
             <div className="mt-3 pt-3 border-t border-gray-700 flex gap-2">
+              {!confirmDelete && (
+                <button
+                  onClick={() => handleEdit(selectedProject)}
+                  className="py-1.5 px-3 text-xs font-medium text-blue-400 hover:text-blue-300 hover:bg-blue-900/20 rounded-lg transition-colors"
+                >
+                  Edit
+                </button>
+              )}
               {confirmDelete ? (
                 <>
                   <button
