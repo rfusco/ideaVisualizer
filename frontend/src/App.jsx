@@ -11,6 +11,7 @@ export default function App() {
   const [selectedProject, setSelectedProject] = useState(null);
   const [showForm, setShowForm] = useState(true);
   const [devMode, setDevMode] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -28,7 +29,15 @@ export default function App() {
   const handleNodeClick = useCallback((project) => {
     setSelectedProject(project);
     setShowForm(false);
+    setConfirmDelete(false);
   }, []);
+
+  async function handleDelete(projectId) {
+    const res = await api.delete(`/api/projects/${projectId}`);
+    setProjects(res.data.projects);
+    setSelectedProject(null);
+    setConfirmDelete(false);
+  }
 
   if (loading) {
     return (
@@ -98,18 +107,29 @@ export default function App() {
               <p className="text-sm text-gray-500">No projects yet.</p>
             ) : (
               projects.map((p) => (
-                <button
+                <div
                   key={p.id}
-                  onClick={() => setSelectedProject(p)}
-                  className={`text-left px-3 py-2 rounded-lg border transition-colors ${
+                  className={`flex items-center gap-1 rounded-lg border transition-colors ${
                     selectedProject?.id === p.id
                       ? 'border-blue-500 bg-blue-900/30'
                       : 'border-gray-700 hover:border-gray-500 bg-gray-800'
                   }`}
                 >
-                  <p className="font-medium text-sm">{p.name}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{p.timeframe}</p>
-                </button>
+                  <button
+                    onClick={() => { setSelectedProject(p); setShowForm(false); setConfirmDelete(false); }}
+                    className="flex-1 text-left px-3 py-2"
+                  >
+                    <p className="font-medium text-sm">{p.name}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{p.timeframe}</p>
+                  </button>
+                  <button
+                    onClick={() => handleDelete(p.id)}
+                    className="px-2 py-2 text-gray-600 hover:text-red-400 transition-colors shrink-0"
+                    title="Delete project"
+                  >
+                    ✕
+                  </button>
+                </div>
               ))
             )}
           </div>
@@ -132,7 +152,7 @@ export default function App() {
                 {selectedProject.name}
               </h3>
               <button
-                onClick={() => setSelectedProject(null)}
+                onClick={() => { setSelectedProject(null); setConfirmDelete(false); }}
                 className="text-gray-400 hover:text-white shrink-0"
               >
                 ✕
@@ -170,6 +190,33 @@ export default function App() {
                 </a>
               )}
             </div>
+            {/* Delete */}
+            <div className="mt-3 pt-3 border-t border-gray-700 flex gap-2">
+              {confirmDelete ? (
+                <>
+                  <button
+                    onClick={() => handleDelete(selectedProject.id)}
+                    className="flex-1 py-1.5 text-xs font-medium bg-red-700 hover:bg-red-600 text-white rounded-lg transition-colors"
+                  >
+                    Yes, delete
+                  </button>
+                  <button
+                    onClick={() => setConfirmDelete(false)}
+                    className="flex-1 py-1.5 text-xs font-medium bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setConfirmDelete(true)}
+                  className="py-1.5 px-3 text-xs font-medium text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded-lg transition-colors"
+                >
+                  Delete project
+                </button>
+              )}
+            </div>
+
             {/* Dev mode info */}
             {devMode && (
               <div className="mt-3 pt-3 border-t border-gray-600 font-mono text-[11px] text-green-400 flex flex-col gap-1">

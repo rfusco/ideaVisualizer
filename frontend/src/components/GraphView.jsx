@@ -4,8 +4,10 @@ import ReactFlow, {
   MiniMap,
   useNodesState,
   useEdgesState,
+  useReactFlow,
+  ReactFlowProvider,
 } from 'reactflow';
-import { useMemo, useEffect, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import * as d3 from 'd3';
 import ProjectNode from './ProjectNode';
 
@@ -130,20 +132,25 @@ function buildEdges(projects) {
   return edges;
 }
 
-export default function GraphView({ projects, onNodeClick, devMode }) {
+function GraphViewInner({ projects, onNodeClick, devMode }) {
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const { fitView } = useReactFlow();
 
+  // Rebuild nodes/edges and refit the viewport whenever projects change.
+  // The 50ms delay lets ReactFlow process the new node positions before
+  // fitView measures the bounding box — without it fitView reads stale layout.
   useEffect(() => {
-    setNodes(buildNodes(projects));
+    setNodes(buildNodes(projects, devMode));
     setEdges(buildEdges(projects));
+    const t = setTimeout(() => fitView({ padding: 0.3, duration: 400 }), 50);
+    return () => clearTimeout(t);
   }, [projects, devMode]);
 
   const handleNodeClick = useCallback((event, node) => {
     const project = projects.find((p) => p.id === node.id);
     if (project) onNodeClick(project);
 
-    // Highlight edges connected to the clicked node, fade all others
     setEdges((eds) =>
       eds.map((edge) => {
         const isConnected = edge.source === node.id || edge.target === node.id;
@@ -189,5 +196,16 @@ export default function GraphView({ projects, onNodeClick, devMode }) {
         />
       </ReactFlow>
     </div>
+  );
+}
+
+// ReactFlowProvider is required so that GraphViewInner can call useReactFlow()
+// to access fitView. Without the provider, useReactFlow() throws because it
+// expects to be inside a ReactFlow context.
+export default function GraphView(props) {
+  return (
+    <ReactFlowProvider>
+      <GraphViewInner {...props} />
+    </ReactFlowProvider>
   );
 }
