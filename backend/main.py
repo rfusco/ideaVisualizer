@@ -11,7 +11,9 @@ import os
 import database
 import pipeline
 import auth
+import github as github_api
 from routers.auth_router import router as auth_router
+from routers.github_router import router as github_router
 
 # ---------------------------------------------------------------------------
 # Startup
@@ -29,6 +31,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 app.include_router(auth_router)
+app.include_router(github_router)
 
 allow_origins = ["http://localhost:5173"]
 frontend_url = os.getenv("FRONTEND_URL")
@@ -41,6 +44,22 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ---------------------------------------------------------------------------
+# GitHub enrichment
+# ---------------------------------------------------------------------------
+def enrich_with_github(projects: list) -> list:
+    """Attach GitHub metadata to each project that has a GitHub URL.
+    Runs after the ML pipeline so it never blocks clustering."""
+    for p in projects:
+        info = github_api.fetch_repo_info(p.get("url") or "")
+        if info:
+            p.update(info)
+        else:
+            # No GitHub URL — mark as idea so the frontend always has a status
+            p["github_status"] = "idea"
+    return projects
 
 
 # ---------------------------------------------------------------------------
@@ -75,6 +94,7 @@ def get_projects(
         return {"projects": []}
     projects = [database.row_to_dict(r) for r in rows]
     enriched = pipeline.run_pipeline(projects, model)
+    enrich_with_github(enriched)
     return {"projects": enriched}
 
 
@@ -118,6 +138,7 @@ def add_project(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Pipeline error: {str(e)}")
 
+    enrich_with_github(enriched)
     return {"projects": enriched}
 
 
@@ -141,4 +162,5 @@ def delete_project(
 
     projects = [database.row_to_dict(r) for r in rows]
     enriched = pipeline.run_pipeline(projects, model)
+    enrich_with_github(enriched)
     return {"projects": enriched}

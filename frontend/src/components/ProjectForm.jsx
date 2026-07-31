@@ -21,6 +21,7 @@ export default function ProjectForm({ onProjectAdded, editingProject, onCancelEd
   const [form, setForm] = useState(EMPTY_FORM);
   const [status, setStatus] = useState("idle");
   const [errorMessage, setErrorMessage] = useState("");
+  const [githubNotice, setGithubNotice] = useState(false);
 
   // When editingProject is set, populate the form with its values.
   // When it's cleared (cancel or save), reset back to the empty form.
@@ -38,7 +39,39 @@ export default function ProjectForm({ onProjectAdded, editingProject, onCancelEd
     }
     setStatus("idle");
     setErrorMessage("");
+    setGithubNotice(false);
   }, [editingProject]);
+
+  // GitHub auto-fill: when the URL field looks like a GitHub repo URL,
+  // wait 600ms then fetch repo metadata and pre-fill empty fields.
+  // Only fills name/description/tools if they are currently blank —
+  // never overwrites something the user already typed.
+  useEffect(() => {
+    if (editingProject) return; // don't auto-fill when editing an existing project
+    const isGithub = /^https?:\/\/github\.com\/[^/]+\/[^/]+/.test(form.url);
+    if (!isGithub) return;
+
+    const timer = setTimeout(async () => {
+      try {
+        const res = await api.get(`/api/github/repo-info?url=${encodeURIComponent(form.url)}`);
+        const data = res.data;
+        setForm((prev) => ({
+          ...prev,
+          name:        prev.name        || data.github_name        || prev.name,
+          description: prev.description || data.github_description || prev.description,
+          tools:       prev.tools.length > 0
+                         ? prev.tools
+                         : [...(data.github_topics || []), data.github_language].filter(Boolean),
+        }));
+        setGithubNotice(true);
+        setTimeout(() => setGithubNotice(false), 3000);
+      } catch {
+        // Silently ignore — repo might be private or URL not fully typed yet
+      }
+    }, 600);
+
+    return () => clearTimeout(timer);
+  }, [form.url, editingProject]);
 
   function updateField(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -164,6 +197,9 @@ export default function ProjectForm({ onProjectAdded, editingProject, onCancelEd
           placeholder="https://github.com/you/project"
           className="px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
+        {githubNotice && (
+          <p className="text-xs text-green-400">Auto-filled from GitHub</p>
+        )}
       </div>
 
       {/* Error message */}

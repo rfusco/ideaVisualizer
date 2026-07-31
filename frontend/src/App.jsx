@@ -203,6 +203,36 @@ export default function App() {
                 </a>
               )}
             </div>
+
+            {/* GitHub metadata — only shown when github_status is set and not "idea" */}
+            {selectedProject.github_status && selectedProject.github_status !== 'idea' && (
+              <div className="mt-2 pt-2 border-t border-gray-700 flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <span className={{
+                    active:    'text-green-400',
+                    stale:     'text-yellow-400',
+                    dormant:   'text-gray-400',
+                    completed: 'text-blue-400',
+                  }[selectedProject.github_status]}>
+                    ●
+                  </span>
+                  <span className="text-xs text-gray-300 capitalize">{selectedProject.github_status}</span>
+                  {selectedProject.github_stars > 0 && (
+                    <span className="ml-auto text-xs text-gray-400">⭐ {selectedProject.github_stars}</span>
+                  )}
+                </div>
+                {selectedProject.github_days_since !== null && selectedProject.github_days_since !== undefined && (
+                  <span className="text-xs text-gray-500">
+                    Last commit: {selectedProject.github_days_since === 0
+                      ? 'today'
+                      : `${selectedProject.github_days_since}d ago`}
+                  </span>
+                )}
+                {selectedProject.github_language && (
+                  <span className="text-xs text-gray-500">Language: {selectedProject.github_language}</span>
+                )}
+              </div>
+            )}
             {/* Edit / Delete */}
             <div className="mt-3 pt-3 border-t border-gray-700 flex gap-2">
               {!confirmDelete && (
