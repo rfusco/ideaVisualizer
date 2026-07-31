@@ -19,10 +19,11 @@ Base = declarative_base()
 class User(Base):
     __tablename__ = "users"
 
-    id         = Column(Integer, primary_key=True, index=True)
-    email      = Column(String, unique=True, index=True, nullable=False)
-    hashed_pw  = Column(String, nullable=False)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    id           = Column(Integer, primary_key=True, index=True)
+    email        = Column(String, unique=True, index=True, nullable=False)
+    hashed_pw    = Column(String, nullable=False)
+    created_at   = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    share_token  = Column(String, unique=True, nullable=True)
 
 
 class Project(Base):
@@ -40,11 +41,16 @@ class Project(Base):
 
 def create_tables():
     Base.metadata.create_all(bind=engine)
-    # Add user_id column to existing projects tables that predate auth
     with engine.connect() as conn:
         try:
             conn.execute(text("ALTER TABLE projects ADD COLUMN user_id INTEGER REFERENCES users(id)"))
             conn.execute(text("CREATE INDEX IF NOT EXISTS ix_projects_user_id ON projects (user_id)"))
+            conn.commit()
+        except Exception:
+            pass  # column already exists
+        try:
+            conn.execute(text("ALTER TABLE users ADD COLUMN share_token TEXT"))
+            conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_users_share_token ON users (share_token)"))
             conn.commit()
         except Exception:
             pass  # column already exists

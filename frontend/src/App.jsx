@@ -1,11 +1,22 @@
 import { useState, useEffect, useCallback } from "react";
+import { Routes, Route } from "react-router-dom";
 import api from "./api/axios";
 import { useAuth } from "./context/AuthContext";
 import AuthPage from "./components/AuthPage";
 import ProjectForm from "./components/ProjectForm";
 import GraphView from "./components/GraphView";
+import SharedView from "./components/SharedView";
 
 export default function App() {
+  return (
+    <Routes>
+      <Route path="/share/:shareToken" element={<SharedView />} />
+      <Route path="*" element={<MainApp />} />
+    </Routes>
+  );
+}
+
+function MainApp() {
   const { user, logout, loading } = useAuth();
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
@@ -13,14 +24,49 @@ export default function App() {
   const [devMode, setDevMode] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
+  const [shareToken, setShareToken] = useState(null);
+  const [showSharePopover, setShowSharePopover] = useState(false);
+  const [copyLabel, setCopyLabel] = useState("Copy link");
 
   useEffect(() => {
     if (user) {
-      api.get("/api/projects").then((res) => {
-        setProjects(res.data.projects);
-      });
+      api.get("/api/projects").then((res) => setProjects(res.data.projects));
+      api.get("/api/share/status").then((res) => setShareToken(res.data.share_token));
     }
   }, [user]);
+
+  async function handleShare() {
+    if (shareToken) {
+      setShowSharePopover((prev) => !prev);
+      return;
+    }
+    const res = await api.post("/api/share/token");
+    setShareToken(res.data.share_token);
+    setShowSharePopover(true);
+  }
+
+  async function handleRevoke() {
+    await api.delete("/api/share/token");
+    setShareToken(null);
+    setShowSharePopover(false);
+  }
+
+  function handleCopyLink() {
+    const url = `${window.location.origin}/share/${shareToken}`;
+    navigator.clipboard.writeText(url);
+    setCopyLabel("Copied!");
+    setTimeout(() => setCopyLabel("Copy link"), 2000);
+  }
+
+  // Close the share popover when clicking anywhere outside it
+  useEffect(() => {
+    if (!showSharePopover) return;
+    function handleClickOutside(e) {
+      if (!e.target.closest('[data-share-popover]')) setShowSharePopover(false);
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showSharePopover]);
 
   const handleProjectAdded = useCallback((responseData) => {
     setProjects(responseData.projects);
@@ -62,17 +108,59 @@ export default function App() {
     <div className="flex h-screen bg-gray-900 text-white">
 
       {/* Left sidebar */}
-      <div className="p-2 border-b border-gray-700 flex justify-end gap-2">
-        <button
-          onClick={() => setDevMode((prev) => !prev)}
-          className={`text-xs px-2 py-1 rounded transition-colors ${
-            devMode
-              ? 'bg-green-700 text-white'
-              : 'bg-gray-700 text-gray-400 hover:text-white'
+      <div className="w-80 flex flex-col border-r border-gray-700 shrink-0">
+
+        {/* Sidebar header — buttons stay fixed, never scroll */}
+        <div className="p-2 border-b border-gray-700 flex justify-end gap-2 shrink-0">
+          <button
+            onClick={() => setDevMode((prev) => !prev)}
+            className={`text-xs px-2 py-1 rounded transition-colors ${
+              devMode
+                ? 'bg-green-700 text-white'
+                : 'bg-gray-700 text-gray-400 hover:text-white'
             }`}
           >
             {devMode ? 'DEV ON' : 'DEV OFF'}
           </button>
+
+          {/* Share button + popover */}
+          <div className="relative" data-share-popover>
+            <button
+              onClick={handleShare}
+              className={`text-xs px-2 py-1 rounded transition-colors ${
+                shareToken
+                  ? 'bg-blue-700 text-white'
+                  : 'bg-gray-700 text-gray-400 hover:text-white'
+              }`}
+            >
+              Share
+            </button>
+            {showSharePopover && shareToken && (
+              <div className="absolute top-full left-0 mt-1 z-50 w-72 bg-gray-800 border border-gray-600 rounded-xl p-3 shadow-xl flex flex-col gap-2">
+                <p className="text-xs text-gray-400">Anyone with this link can view your graph:</p>
+                <div className="flex gap-1">
+                  <input
+                    readOnly
+                    value={`${window.location.origin}/share/${shareToken}`}
+                    className="flex-1 text-xs bg-gray-900 border border-gray-600 rounded px-2 py-1.5 text-gray-300 truncate"
+                  />
+                  <button
+                    onClick={handleCopyLink}
+                    className="text-xs px-2 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded transition-colors shrink-0"
+                  >
+                    {copyLabel}
+                  </button>
+                </div>
+                <button
+                  onClick={handleRevoke}
+                  className="text-xs text-red-400 hover:text-red-300 text-left transition-colors"
+                >
+                  Revoke link
+                </button>
+              </div>
+            )}
+          </div>
+
           <button
             onClick={logout}
             className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-400 hover:text-white transition-colors"
@@ -80,7 +168,9 @@ export default function App() {
             Sign out
           </button>
         </div>
-      <div className="w-80 flex flex-col border-r border-gray-700 overflow-y-auto shrink-0">
+
+        {/* Scrollable sidebar content */}
+        <div className="flex flex-col overflow-y-auto flex-1">
 
         {/* Tab switcher */}
         <div className="flex border-b border-gray-700">
@@ -147,7 +237,8 @@ export default function App() {
             )}
           </div>
         )}
-      </div>
+        </div> {/* end scrollable content */}
+      </div> {/* end sidebar */}
 
       {/* Main graph area */}
       <div className="flex-1 relative">

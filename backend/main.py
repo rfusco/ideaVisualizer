@@ -7,6 +7,7 @@ from sentence_transformers import SentenceTransformer
 from sqlalchemy.orm import Session
 import json
 import os
+import uuid
 
 import database
 import pipeline
@@ -164,3 +165,61 @@ def delete_project(
     enriched = pipeline.run_pipeline(projects, model)
     enrich_with_github(enriched)
     return {"projects": enriched}
+
+
+# ---------------------------------------------------------------------------
+# Share routes
+# ---------------------------------------------------------------------------
+@app.get("/api/share/status")
+def get_share_status(
+    current_user: database.User = Depends(auth.get_current_user),
+):
+    """Returns the current user's share token, or None if not sharing."""
+    return {"share_token": current_user.share_token}
+
+
+@app.post("/api/share/token")
+def generate_share_token(
+    current_user: database.User = Depends(auth.get_current_user),
+    db: Session = Depends(database.get_db),
+):
+    """Generate a new share token for the current user."""
+    user = db.query(database.User).filter(database.User.id == current_user.id).first()
+    user.share_token = str(uuid.uuid4())
+    db.commit()
+    db.refresh(user)
+    return {"share_token": user.share_token}
+
+
+@app.delete("/api/share/token")
+def revoke_share_token(
+    current_user: database.User = Depends(auth.get_current_user),
+    db: Session = Depends(database.get_db),
+):
+    """Revoke the current user's share token."""
+    user = db.query(database.User).filter(database.User.id == current_user.id).first()
+    user.share_token = None
+    db.commit()
+    return {"share_token": None}
+
+
+@app.get("/api/share/{token}")
+def get_shared_graph(
+    token: str,
+    db: Session = Depends(database.get_db),
+):
+    """Public endpoint — no auth. Returns the owner's enriched projects."""
+    owner = db.query(database.User).filter(database.User.share_token == token).first()
+    if not owner:
+        raise HTTPException(status_code=404, detail="Share link not found or revoked.")
+
+    rows = db.query(database.Project).filter(
+        database.Project.user_id == owner.id
+    ).all()
+    if not rows:
+        return {"projects": [], "owner_email": owner.email}
+
+    projects = [database.row_to_dict(r) for r in rows]
+    enriched = pipeline.run_pipeline(projects, model)
+    enrich_with_github(enriched)
+    return {"projects": enriched, "owner_email": owner.email}
