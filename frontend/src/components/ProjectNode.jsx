@@ -43,11 +43,10 @@ export default function ProjectNode({ data, selected }) {
     ? { border: `3px dashed ${statusStyle.border}` }
     : { border: `3px solid ${statusStyle.border}` };
 
-  // outline doesn't affect layout or the D3 collision radius — it renders
-  // outside the box model so nodes won't overlap due to the status indicator
+  // inset box-shadow draws inside the circle on the inner edge —
+  // no impact on layout or D3 collision radius
   const outlineStyle = {
-    outline: `3px ${status === 'idea' ? 'dashed' : 'solid'} ${statusStyle.border}`,
-    outlineOffset: '0px',
+    boxShadow: `inset 0 0 0 3px ${statusStyle.border}`,
   };
 
   return (
