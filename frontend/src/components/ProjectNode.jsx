@@ -13,11 +13,11 @@ const CLUSTER_COLORS = [
 
 // Status ring styles — outer border color independent of cluster fill
 const STATUS_STYLES = {
-  active:    { border: '#22c55e', dotBg: 'bg-green-400',  label: 'Active' },
-  stale:     { border: '#eab308', dotBg: 'bg-yellow-400', label: 'Stale' },
-  dormant:   { border: '#6b7280', dotBg: 'bg-gray-400',   label: 'Dormant' },
-  completed: { border: '#3b82f6', dotBg: 'bg-blue-400',   label: 'Completed' },
-  idea:      { border: '#6b7280', dotBg: 'bg-gray-500',   label: 'Idea' },
+  active:    { border: '#22c55e' },
+  stale:     { border: '#eab308' },
+  dormant:   { border: '#6b7280' },
+  completed: { border: '#3b82f6' },
+  idea:      { border: '#4b5563' },
 };
 
 export default function ProjectNode({ data, selected }) {
@@ -43,44 +43,40 @@ export default function ProjectNode({ data, selected }) {
     ? { border: `3px dashed ${statusStyle.border}` }
     : { border: `3px solid ${statusStyle.border}` };
 
+  // outline doesn't affect layout or the D3 collision radius — it renders
+  // outside the box model so nodes won't overlap due to the status indicator
+  const outlineStyle = {
+    outline: `3px ${status === 'idea' ? 'dashed' : 'solid'} ${statusStyle.border}`,
+    outlineOffset: '3px',
+  };
+
   return (
     <div className="relative overflow-visible flex flex-col items-center">
 
       <Handle type="target" position={Position.Top}
         style={{ left: '50%', top: '50%', opacity: 0, pointerEvents: 'none' }} />
 
-      {/* Status ring wraps the node circle — separate from cluster color */}
+      {/* The cluster-colored circle with status outline */}
       <div
-        style={{ ...borderStyle, borderRadius: '9999px', padding: '3px' }}
-        className={selected ? `ring-2 ${color.ring} ring-offset-2 ring-offset-gray-900` : ''}
+        style={{ opacity, ...outlineStyle }}
+        className={`
+          ${size} ${color.bg}
+          ${selected ? `ring-4 ${color.ring}` : ''}
+          rounded-full flex flex-col items-center justify-center
+          text-white text-center cursor-pointer
+          transition-all duration-200 hover:scale-110 shadow-lg p-2
+        `}
       >
-        {/* The cluster-colored circle */}
-        <div
-          style={{ opacity }}
-          className={`
-            ${size} ${color.bg}
-            rounded-full flex flex-col items-center justify-center
-            text-white text-center cursor-pointer
-            transition-all duration-200 hover:scale-110 shadow-lg p-2
-          `}
-        >
-          <p className="text-xs font-semibold leading-tight line-clamp-2">
-            {data.name}
-          </p>
-          <p className="text-[10px] text-white/70 mt-1">
-            {data.timeframe}
-          </p>
-          {data.confidence < 0.5 && (
-            <span className="mt-1 text-[10px] bg-white/20 rounded px-1">?</span>
-          )}
-        </div>
+        <p className="text-xs font-semibold leading-tight line-clamp-2">
+          {data.name}
+        </p>
+        <p className="text-[10px] text-white/70 mt-1">
+          {data.timeframe}
+        </p>
+        {data.confidence < 0.5 && (
+          <span className="mt-1 text-[10px] bg-white/20 rounded px-1">?</span>
+        )}
       </div>
-
-      {/* Activity dot — top-right corner, shows status at a glance */}
-      <div
-        className={`absolute top-0 right-0 w-3 h-3 rounded-full ${statusStyle.dotBg} border-2 border-gray-900`}
-        title={statusStyle.label}
-      />
 
       <Handle type="source" position={Position.Bottom}
         style={{ left: '50%', top: '50%', opacity: 0, pointerEvents: 'none' }} />
