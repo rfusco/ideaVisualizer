@@ -47,7 +47,7 @@ export default function ProjectNode({ data, selected }) {
   // outside the box model so nodes won't overlap due to the status indicator
   const outlineStyle = {
     outline: `3px ${status === 'idea' ? 'dashed' : 'solid'} ${statusStyle.border}`,
-    outlineOffset: '3px',
+    outlineOffset: '0px',
   };
 
   return (
