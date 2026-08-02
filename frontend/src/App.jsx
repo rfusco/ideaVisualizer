@@ -27,13 +27,38 @@ function MainApp() {
   const [shareToken, setShareToken] = useState(null);
   const [showSharePopover, setShowSharePopover] = useState(false);
   const [copyLabel, setCopyLabel] = useState("Copy link");
+  const [graphMode, setGraphMode] = useState('2d');
+  // Cache stores the full project list for each dims value so toggling
+  // between 2D and 3D doesn't re-run the pipeline on every click.
+  const [projectCache, setProjectCache] = useState({ 2: null, 3: null });
 
   useEffect(() => {
     if (user) {
-      api.get("/api/projects").then((res) => setProjects(res.data.projects));
+      api.get("/api/projects?dims=2").then((res) => {
+        setProjects(res.data.projects);
+        setProjectCache((prev) => ({ ...prev, 2: res.data.projects }));
+      });
       api.get("/api/share/status").then((res) => setShareToken(res.data.share_token));
     }
   }, [user]);
+
+  async function fetchForDims(dims) {
+    // Return cached result immediately if available
+    const cached = projectCache[dims];
+    if (cached) {
+      setProjects(cached);
+      return;
+    }
+    const res = await api.get(`/api/projects?dims=${dims}`);
+    setProjects(res.data.projects);
+    setProjectCache((prev) => ({ ...prev, [dims]: res.data.projects }));
+  }
+
+  function handleModeToggle() {
+    const next = graphMode === '2d' ? '3d' : '2d';
+    setGraphMode(next);
+    fetchForDims(next === '3d' ? 3 : 2);
+  }
 
   async function handleShare() {
     if (shareToken) {
@@ -69,9 +94,15 @@ function MainApp() {
   }, [showSharePopover]);
 
   const handleProjectAdded = useCallback((responseData) => {
+    const dims = graphMode === '3d' ? 3 : 2;
     setProjects(responseData.projects);
+    // Update cache for current dims, clear the other so it re-fetches on next toggle
+    setProjectCache((prev) => ({
+      [dims]: responseData.projects,
+      [dims === 2 ? 3 : 2]: null,
+    }));
     setSelectedProject(null);
-  }, []);
+  }, [graphMode]);
 
   const handleNodeClick = useCallback((project) => {
     setSelectedProject(project);
@@ -88,8 +119,13 @@ function MainApp() {
   }
 
   async function handleDelete(projectId) {
-    const res = await api.delete(`/api/projects/${projectId}`);
+    const dims = graphMode === '3d' ? 3 : 2;
+    const res = await api.delete(`/api/projects/${projectId}?dims=${dims}`);
     setProjects(res.data.projects);
+    setProjectCache((prev) => ({
+      [dims]: res.data.projects,
+      [dims === 2 ? 3 : 2]: null,
+    }));
     setSelectedProject(null);
     setConfirmDelete(false);
   }
@@ -121,6 +157,12 @@ function MainApp() {
             }`}
           >
             {devMode ? 'DEV ON' : 'DEV OFF'}
+          </button>
+          <button
+            onClick={handleModeToggle}
+            className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-400 hover:text-white transition-colors"
+          >
+            {graphMode === '2d' ? '2D' : '3D'}
           </button>
 
           {/* Share button + popover */}
@@ -202,6 +244,7 @@ function MainApp() {
               onProjectAdded={handleProjectAdded}
               editingProject={editingProject}
               onCancelEdit={() => setEditingProject(null)}
+              currentDims={graphMode === '3d' ? 3 : 2}
             />
           </div>
         ) : (
@@ -246,6 +289,7 @@ function MainApp() {
           projects={projects}
           onNodeClick={handleNodeClick}
           devMode={devMode}
+          mode={graphMode}
         />
 
         {/* Detail panel — floats over the graph when a node is selected */}

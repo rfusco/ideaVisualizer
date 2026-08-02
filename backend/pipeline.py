@@ -42,35 +42,35 @@ def embed_projects(projects: List[Dict], model) -> np.ndarray:
 # ---------------------------------------------------------------------------
 # Dimensionality reduction (UMAP)
 # ---------------------------------------------------------------------------
-def reduce_dimensions(embeddings: np.ndarray) -> np.ndarray:
+def reduce_dimensions(embeddings: np.ndarray, dims: int = 2) -> np.ndarray:
     """
-    Reduce 384-dimensional embeddings to 2D for visualization.
-    Returns array of shape (num_projects, 2) — the x,y coords for each node.
+    Reduce 384-dimensional embeddings to `dims` dimensions (2 or 3).
+    Returns array of shape (num_projects, dims).
 
-    n_neighbors: how many nearby points UMAP considers when learning structure.
-                 Lower = more local detail, higher = more global structure.
-                 15 is a good default for small datasets.
-    min_dist:    how tightly UMAP packs points together in 2D.
-                 0.1 gives compact but distinguishable clusters.
-    metric:      cosine similarity works best for text embeddings.
-    random_state: fixed seed so the layout doesn't randomly change each run.
+    dims=2 produces x,y for the 2D ReactFlow graph.
+    dims=3 produces x,y,z for the 3D force graph.
+
+    HDBSCAN runs on the original 384-dim embeddings separately, so clustering
+    quality is the same regardless of what dims is set to here.
     """
     if len(embeddings) < 2:
-        return np.zeros((len(embeddings), 2))
+        return np.zeros((len(embeddings), dims))
 
-    # With very few points, spread them manually — UMAP needs enough
-    # neighbors to build a meaningful graph, and its eigensolver breaks
-    # when n_neighbors approaches the dataset size
+    # Spread tiny datasets manually — UMAP's eigensolver breaks when
+    # n_neighbors approaches the dataset size
     if len(embeddings) < 4:
-        # Just space them evenly in a circle for tiny datasets
-        angles = np.linspace(0, 2 * np.pi, len(embeddings), endpoint=False)
-        coords = np.column_stack([np.cos(angles), np.sin(angles)])
-        return coords
+        if dims == 2:
+            angles = np.linspace(0, 2 * np.pi, len(embeddings), endpoint=False)
+            return np.column_stack([np.cos(angles), np.sin(angles)])
+        else:
+            # Distribute on a sphere surface for 3D tiny datasets
+            angles = np.linspace(0, 2 * np.pi, len(embeddings), endpoint=False)
+            return np.column_stack([np.cos(angles), np.sin(angles), np.zeros(len(embeddings))])
 
     n_neighbors = min(15, len(embeddings) - 1)
 
     reducer = umap.UMAP(
-        n_components=2,
+        n_components=dims,
         n_neighbors=n_neighbors,
         min_dist=0.1,
         metric="cosine",
@@ -119,35 +119,36 @@ def cluster_projects(embeddings: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
 # ---------------------------------------------------------------------------
 # Main pipeline function
 # ---------------------------------------------------------------------------
-def run_pipeline(projects: List[Dict], model) -> List[Dict]:
+def run_pipeline(projects: List[Dict], model, dims: int = 2) -> List[Dict]:
     """
     Run the full pipeline on the current project list.
-    Attaches x, y, cluster_id, and confidence to each project Dict.
-    Returns the enriched project list.
+    Attaches x, y, z, cluster_id, and confidence to each project dict.
+
+    dims=2: z is always 0.0 (UMAP runs in 2D)
+    dims=3: z is the real third UMAP coordinate
     """
     if not projects:
         return []
 
-    # Step 1: embed all projects
     embeddings = embed_projects(projects, model)
 
     print("Number of embeddings:", len(embeddings))
 
-    # Step 2: reduce to 2D
-    coords_2d = reduce_dimensions(embeddings)
+    # Reduce to 2D or 3D depending on the requested view
+    coords = reduce_dimensions(embeddings, dims=dims)
 
-    # Step 3: cluster on full-dim embeddings
+    # Clustering always runs on the full 384-dim embeddings — dims doesn't affect it
     labels, probabilities = cluster_projects(embeddings)
 
-    # Step 4: attach results back to each project Dict
     enriched = []
     for i, project in enumerate(projects):
         enriched.append({
-            **project,                         # all original fields preserved
-            "x": float(coords_2d[i][0]),       # 2D x coordinate
-            "y": float(coords_2d[i][1]),       # 2D y coordinate
-            "cluster_id": int(labels[i]),      # cluster assignment (-1 = noise)
-            "confidence": float(probabilities[i]),  # 0.0 to 1.0
+            **project,
+            "x": float(coords[i][0]),
+            "y": float(coords[i][1]),
+            "z": float(coords[i][2]) if dims == 3 else 0.0,
+            "cluster_id": int(labels[i]),
+            "confidence": float(probabilities[i]),
         })
 
     return enriched

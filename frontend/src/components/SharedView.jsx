@@ -19,19 +19,39 @@ export default function SharedView() {
   const [ownerEmail, setOwnerEmail] = useState('');
   const [selectedProject, setSelectedProject] = useState(null);
   const [state, setState] = useState('loading'); // 'loading' | 'ready' | 'notfound'
+  const [graphMode, setGraphMode] = useState('2d');
+  const [projectCache, setProjectCache] = useState({ 2: null, 3: null });
 
   useEffect(() => {
     publicApi.get(`/api/share/${shareToken}`)
       .then((res) => {
         setProjects(res.data.projects);
         setOwnerEmail(res.data.owner_email);
+        setProjectCache({ 2: res.data.projects, 3: null });
         setState('ready');
       })
-      .catch((err) => {
-        if (err.response?.status === 404) setState('notfound');
-        else setState('notfound');
+      .catch(() => {
+        setState('notfound');
       });
   }, [shareToken]);
+
+  async function fetchForDims(dims) {
+    const cached = projectCache[dims];
+    if (cached) {
+      setProjects(cached);
+      return;
+    }
+    const res = await publicApi.get(`/api/share/${shareToken}?dims=${dims}`);
+    setProjects(res.data.projects);
+    setOwnerEmail(res.data.owner_email);
+    setProjectCache((prev) => ({ ...prev, [dims]: res.data.projects }));
+  }
+
+  function handleModeToggle() {
+    const next = graphMode === '2d' ? '3d' : '2d';
+    setGraphMode(next);
+    fetchForDims(next === '3d' ? 3 : 2);
+  }
 
   const handleNodeClick = useCallback((project) => {
     setSelectedProject(project);
@@ -61,9 +81,17 @@ export default function SharedView() {
         <span className="text-sm text-gray-300">
           <span className="font-medium text-white">{ownerEmail}</span>'s idea graph
         </span>
-        <span className="text-xs px-2 py-0.5 rounded bg-gray-700 text-gray-400 tracking-wide">
-          READ ONLY
-        </span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleModeToggle}
+            className="text-xs px-2 py-0.5 rounded bg-gray-700 text-gray-400 hover:text-white transition-colors"
+          >
+            {graphMode === '2d' ? '2D' : '3D'}
+          </button>
+          <span className="text-xs px-2 py-0.5 rounded bg-gray-700 text-gray-400 tracking-wide">
+            READ ONLY
+          </span>
+        </div>
       </div>
 
       {/* Graph area */}
@@ -72,6 +100,7 @@ export default function SharedView() {
           projects={projects}
           onNodeClick={handleNodeClick}
           devMode={false}
+          mode={graphMode}
         />
 
         {/* Read-only detail panel */}

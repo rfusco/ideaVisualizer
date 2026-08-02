@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, List
@@ -87,6 +87,7 @@ def health():
 def get_projects(
     current_user: database.User = Depends(auth.get_current_user),
     db: Session = Depends(database.get_db),
+    dims: int = Query(default=2, ge=2, le=3),
 ):
     rows = db.query(database.Project).filter(
         database.Project.user_id == current_user.id
@@ -94,7 +95,7 @@ def get_projects(
     if not rows:
         return {"projects": []}
     projects = [database.row_to_dict(r) for r in rows]
-    enriched = pipeline.run_pipeline(projects, model)
+    enriched = pipeline.run_pipeline(projects, model, dims=dims)
     enrich_with_github(enriched)
     return {"projects": enriched}
 
@@ -104,6 +105,7 @@ def add_project(
     project: ProjectRequest,
     current_user: database.User = Depends(auth.get_current_user),
     db: Session = Depends(database.get_db),
+    dims: int = Query(default=2, ge=2, le=3),
 ):
     existing = db.query(database.Project).filter(
         database.Project.id == project.id,
@@ -135,7 +137,7 @@ def add_project(
     projects = [database.row_to_dict(r) for r in rows]
 
     try:
-        enriched = pipeline.run_pipeline(projects, model)
+        enriched = pipeline.run_pipeline(projects, model, dims=dims)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Pipeline error: {str(e)}")
 
@@ -148,6 +150,7 @@ def delete_project(
     project_id: str,
     current_user: database.User = Depends(auth.get_current_user),
     db: Session = Depends(database.get_db),
+    dims: int = Query(default=2, ge=2, le=3),
 ):
     db.query(database.Project).filter(
         database.Project.id == project_id,
@@ -162,7 +165,7 @@ def delete_project(
         return {"projects": []}
 
     projects = [database.row_to_dict(r) for r in rows]
-    enriched = pipeline.run_pipeline(projects, model)
+    enriched = pipeline.run_pipeline(projects, model, dims=dims)
     enrich_with_github(enriched)
     return {"projects": enriched}
 
@@ -207,6 +210,7 @@ def revoke_share_token(
 def get_shared_graph(
     token: str,
     db: Session = Depends(database.get_db),
+    dims: int = Query(default=2, ge=2, le=3),
 ):
     """Public endpoint — no auth. Returns the owner's enriched projects."""
     owner = db.query(database.User).filter(database.User.share_token == token).first()
@@ -220,6 +224,6 @@ def get_shared_graph(
         return {"projects": [], "owner_email": owner.email}
 
     projects = [database.row_to_dict(r) for r in rows]
-    enriched = pipeline.run_pipeline(projects, model)
+    enriched = pipeline.run_pipeline(projects, model, dims=dims)
     enrich_with_github(enriched)
     return {"projects": enriched, "owner_email": owner.email}

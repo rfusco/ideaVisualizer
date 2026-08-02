@@ -17,7 +17,7 @@ const EMPTY_FORM = {
   url: "",
 };
 
-export default function ProjectForm({ onProjectAdded, editingProject, onCancelEdit }) {
+export default function ProjectForm({ onProjectAdded, editingProject, onCancelEdit, currentDims = 2 }) {
   const [form, setForm] = useState(EMPTY_FORM);
   const [status, setStatus] = useState("idle");
   const [errorMessage, setErrorMessage] = useState("");
@@ -110,7 +110,7 @@ export default function ProjectForm({ onProjectAdded, editingProject, onCancelEd
         url: form.url.trim() || null,
       };
 
-      const response = await api.post("/api/projects", payload);
+      const response = await api.post(`/api/projects?dims=${currentDims}`, payload);
       
       // Tell the parent a project was added, passing back the full response
       onProjectAdded(response.data);

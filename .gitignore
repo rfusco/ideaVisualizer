@@ -6,6 +6,7 @@ frontend/dist/
 backend/venv/
 backend/__pycache__/
 backend/*.pyc
+ideaVisualizer.db
 
 # General
 .DS_Store
