@@ -10,6 +10,7 @@ import ReactFlow, {
 import { useEffect, useCallback, useRef, useState, useMemo } from 'react';
 import * as d3 from 'd3';
 import ForceGraph3D from 'react-force-graph-3d';
+import * as THREE from 'three';
 import ProjectNode from './ProjectNode';
 
 const nodeTypes = { project: ProjectNode };
@@ -146,8 +147,45 @@ function GraphView2D({ projects, onNodeClick, devMode }) {
 // 3D view (react-force-graph-3d)
 // ---------------------------------------------------------------------------
 
-// How large each node sphere is — scaled to match 2D timeframe sizes visually
-const TIMEFRAME_VAL = { weekend: 4, week: 6, month: 8, summer: 11 };
+// Direct sphere radii in Three.js world units — more visually distinct than nodeVal's cube-root mapping
+const TIMEFRAME_RADIUS = { weekend: 4, week: 6, month: 8, summer: 11 };
+
+// Outer glow sphere config keyed by github_status.
+// AdditiveBlending + BackSide = per-object bloom without EffectComposer.
+const STATUS_GLOW = {
+  active:    { color: 0x22c55e, opacity: 0.55 },
+  stale:     { color: 0xeab308, opacity: 0.40 },
+  dormant:   { color: 0x9ca3af, opacity: 0.20 },
+  completed: { color: 0x60a5fa, opacity: 0.40 },
+};
+
+function makeNodeObject(node) {
+  const p = node._project;
+  const radius = TIMEFRAME_RADIUS[p?.timeframe] ?? 6;
+  const group = new THREE.Group();
+
+  // Inner sphere — smooth (24 segments), cluster-colored, lit
+  const innerMat = new THREE.MeshLambertMaterial({
+    color: new THREE.Color(clusterHex(p?.cluster_id)),
+  });
+  group.add(new THREE.Mesh(new THREE.SphereGeometry(radius, 24, 24), innerMat));
+
+  // Glow sphere — status-colored, additive blending, BackSide creates a rim halo
+  const glow = STATUS_GLOW[p?.github_status];
+  if (glow) {
+    const glowMat = new THREE.MeshBasicMaterial({
+      color: new THREE.Color(glow.color),
+      transparent: true,
+      opacity: glow.opacity,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      side: THREE.BackSide,
+    });
+    group.add(new THREE.Mesh(new THREE.SphereGeometry(radius * 2.2, 24, 24), glowMat));
+  }
+
+  return group;
+}
 
 function GraphView3D({ projects, onNodeClick }) {
   const containerRef = useRef(null);
@@ -199,20 +237,15 @@ function GraphView3D({ projects, onNodeClick }) {
         height={size.height}
         graphData={graphData}
         backgroundColor="#111827"
-        // Node appearance: cluster color, timeframe-driven size
-        nodeColor={(node) => clusterHex(node._project?.cluster_id)}
-        nodeVal={(node) => TIMEFRAME_VAL[node._project?.timeframe] ?? 6}
+        nodeThreeObject={makeNodeObject}
+        nodeThreeObjectExtend={false}
         nodeLabel={(node) => node._project?.name ?? ''}
-        nodeOpacity={0.9}
-        // Edges: same cluster connections as 2D
         linkColor={() => '#4b5563'}
         linkOpacity={0.4}
         linkWidth={1}
-        // Clicking a node fires the same detail-panel handler as 2D
         onNodeClick={(node) => {
           if (node._project) onNodeClick(node._project);
         }}
-        // Warm up the simulation quickly so nodes settle from their UMAP positions
         warmupTicks={60}
         cooldownTicks={0}
       />
